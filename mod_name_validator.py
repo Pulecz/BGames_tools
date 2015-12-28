@@ -21,7 +21,7 @@ and creates directories, with pattern:
 #-------------------------------------Input-------------------------------------
 nexus_id_RE = re.compile('\-(\d{2,})\-') #catch - two digits and - 
 number = 1
-debug = False
+debug = True
 writeSummary = True
 makeDirs = True
 if makeDirs:
@@ -203,8 +203,8 @@ if makeDirs:
 		for id, key in enumerate(mods):
 			if not key == 'dir_names' and os.path.exists(os.path.join(os.getcwd(),mods[key]['file_name'])) is True:
 				source = os.path.join(os.getcwd(),mods[key]['file_name'])
-				target = os.path.join(os.getcwd(),mods['dir_names'][int(key)-1] + '\\' + mods[key]['file_name'])
-				print('Moving ' + source.replace(os.getcwd()+ '\\',''), 'to ' + target.replace(os.getcwd()+ '\\',''))
+				target = os.path.join(os.getcwd(),mods['dir_names'][int(key)-1] + '/' + mods[key]['file_name'])
+				print('Moving {0} to {1}'.format(mods[key]['file_name'], mods['dir_names'][int(key)-1]))
 				try:
 					os.rename(source, target)
 				except OSError as mods_move_err:
