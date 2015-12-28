@@ -1,4 +1,4 @@
-import re, os, sys, csv # parsing, scaning, arguments
+import re, os, csv # parsing, scaning, summary
 from urllib.request import urlopen # for web_parsing
 #V01 - basic parsing, making dirs and writing summary
 #V02 - implented asking for comment, skipping directories in scan, better {debug, printing, summary, making dirs}
@@ -21,7 +21,7 @@ and creates directories, with pattern:
 #-------------------------------------Input-------------------------------------
 nexus_id_RE = re.compile('\-(\d{2,})\-') #catch - two digits and - 
 number = 1
-debug = True
+debug = False
 writeSummary = True
 makeDirs = True
 if makeDirs:
@@ -32,10 +32,8 @@ ask_for_comment = False
 get_nexus_mod_name = True
 if get_nexus_mod_name:
 	get_skyrimgems_desc = True #requires modName
-
-
-
 #-------------------------------------Defs--------------------------------------
+
 
 def get_skyrimgems_source():
 	try: # handle if url is not reachable error
