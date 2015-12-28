@@ -21,7 +21,7 @@ and creates directories, with pattern:
 #-------------------------------------Input-------------------------------------
 nexus_id_RE = re.compile('\-(\d{2,})\-') #catch - two digits and - 
 number = 1
-debug = True
+debug = False
 writeSummary = True
 makeDirs = True
 if makeDirs:
@@ -31,7 +31,7 @@ ask_for_description = False
 ask_for_comment = False
 get_nexus_mod_name = True
 if get_nexus_mod_name:
-	get_skyrimgems_desc = True #requires modName
+	get_skyrimgems_desc = True
 #-------------------------------------Defs--------------------------------------
 
 
@@ -135,19 +135,24 @@ def parse_nexus_mods(items):
 			print('Using Re', rest_RE)
 		name = re.search(rest_RE, mod).group(1)
 		version = re.search(rest_RE, mod).group(2)
-		modName = get_nexus_title_from_web(
-		'http://www.nexusmods.com/skyrim/mods/' + nexus_id + '/?'
-		).replace(' at Skyrim Nexus - mods and community','')
+		if get_nexus_mod_name:
+			modName = get_nexus_title_from_web(
+			'http://www.nexusmods.com/skyrim/mods/' + nexus_id + '/?'
+			).replace(' at Skyrim Nexus - mods and community','')
 		if debug:
 			print('name ',name)
 			print('file_name', name + '-' + nexus_id + '-' + version + extension)
-			print('mod_name', modName)
+			if get_nexus_mod_name:
+				print('mod_name', modName)
 			print('Is file_name correct? ', os.path.exists(os.path.join(os.getcwd(),mod)))
 			print('extension ',extension)
 			print('nexus_id ', nexus_id)
 			print('version', version)
 		print('Valited ',str(number) + '.' + name + '-' + nexus_id + '-' + version)
-		result.append(modName + '-' + nexus_id)
+		if get_nexus_mod_name:
+			result.append(modName + '-' + nexus_id)
+		else:
+			result.append(name + '-' + nexus_id)
 		d[str(number)] = {}
 		d[str(number)]['name'] = name
 		d[str(number)]['file_name'] = name + '-' + nexus_id + '-' + version + extension
@@ -216,7 +221,8 @@ if makeDirs:
 						meta_file.write('comment=' + mods[key]['comment'] + '\n')
 						meta_file.write('modID=' + mods[key]['modID'] + '\n')
 						meta_file.write('name=' + mods[key]['name'] + '\n')
-						meta_file.write('modName=' + mods[key]['modName'] + '\n')
+						if get_nexus_mod_name:
+							meta_file.write('modName=' + mods[key]['modName'] + '\n')
 						meta_file.write('version=' + mo_friendly_version_parser(mods[key]['version']) + '\n')
 
 if writeSummary:
