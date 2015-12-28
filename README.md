@@ -22,7 +22,8 @@ If allowed it will get from web:
 
 Then if allowed script will create folders with pattern "$ModName-$ModID" and if getting info from Nexus is not allowed (no internet connectivity) the folders will be named "$Name-$ModID.
 Files can be moved to those folders and meta files can be created for them. If then moved to downloads folder of [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/) it can read Name, ModName, ModID and version from the meta file.
-Comment is also written to meta file and script can ask user for comment for each Mod.
+The version is formatted in MO way so version '2292e' is written as '2.2.9.2e', '4-0-1' as '4.0.1.0' and '3-0a' as '3.0.0.0a' and etc. This also applies for csv.
+Comment is also written to meta file and script can ask user for comment for each Mod. Comment line is not handled by ModOrganizer in any way as far as I know.
 
 Options:
  - debug = True (provides additional print information and writes summary.json when finished)
