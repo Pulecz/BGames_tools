@@ -46,7 +46,7 @@ def get_skyrimgems_source():
 
 	
 def search_skyrimgems_source(modName):
-	descriptions_RE = '.*' + modName + '.*\n\s+\<td\s\w+\S+\>([\w\s\',.()&#39;]*)<\Std\>'
+	descriptions_RE = '.*' + modName + '.*\n\s+\<td\s\w+\S+\>([\w\s\'\"\,\.\(\)\-\[\]\<\>+=\/\:&#39;]*)<\Std\>'
 	try:
 		return re.search(descriptions_RE,skyrimgems_source).group(1)
 	except AttributeError as re_e:
