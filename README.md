@@ -14,7 +14,7 @@ Then by using regex /\-(\d{2,})\-/ it will catch any Nexus Mod files and extract
   - File Name = what was scanned
   - ModID = Information between Name and Version
   - Version = Everything after ModID in filename
-  - Link to Nexus page = http://www.nexusmods.com/skyrim/mods/ + $ModID $ + /?
+  - Link to Nexus page = http://www.nexusmods.com/$game/mods/ + $ModID $ + /
 
 #####If allowed it will get from web:
   - ModName = because Name of File does not always suggest name of the mod like [here](http://www.nexusmods.com/skyrim/mods/30947) it will get title of the Nexus Page
