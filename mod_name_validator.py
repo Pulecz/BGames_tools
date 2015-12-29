@@ -7,7 +7,7 @@ from urllib.request import urlopen # for web_parsing
 #V05 - added description (another field added, which is actually comment, previous comment is the description), maybe some more improvements?
 #V06 - write meta file to each mod, write to csv, turn off dir_names_with_generated_numbers, get modName from nexus, get desc from skyrimgems
 #V07 - removed custom order, making dirs with numbers, def input_int and options to run with arguments
-#V08 - Fallout 4 Support
+#V08 - Fallout 4 Support, getting Nexus categories
 
 """
 validates Nexus Mod files with pattern:
@@ -18,6 +18,7 @@ and creates directories, with pattern:
 
 """ todo
 	look for meta files, pick some information by MO from them?
+	append to summary csv? always?
 """
 #-------------------------------------Input-------------------------------------
 nexus_id_RE = re.compile('\-(\d{2,})\-') #catch - two digits and - 
@@ -61,7 +62,7 @@ def get_skyrimgems_source():
 def search_skyrimgems_source(modName):
 	descriptions_RE = '.*' + modName + '.*\n\s+\<td\s\w+\S+\>(.*)<\Std\>'
 	try:
-		return re.search(descriptions_RE,skyrimgems_source).group(1)
+		return (re.search(descriptions_RE,skyrimgems_source).group(1))
 	except AttributeError as re_e:
 		print('"{0}" does not seem to be on Skyrimgems.'.format(modName))
 		return 'N/A'
@@ -76,11 +77,20 @@ def get_nexus_title_from_web(url):
 		return None
 	html_source = foo.read().decode("utf-8")
 	title_RE = re.compile('<title>(.*?)</title>', re.IGNORECASE|re.DOTALL)
+	categories_RE = '.*searchresults\S\?src_cat=(\d{1,3})\"\>(.*)<\Sa\>'
 	try:
-		return title_RE.search(html_source).group(1)
+		return(
+		title_RE.search(html_source).group(1),
+		re.search(categories_RE,html_source).group(1),
+		re.search(categories_RE,html_source).group(2)
+		)
 	except AttributeError as re_e:
-		print(re_e)
-		return None
+		#print(re_e)
+		adult_RE = '\<h2\>Adult-only\scontent<\Sh2>'
+		if re.search(adult_RE,html_source):
+			print('\nPage {0} is for adults only and requires log-in.\
+			\nPlease get modName and its categories yourself.\n'.format(url))
+		return (None,None,None)
 
 
 def mo_friendly_version_parser(v):
@@ -149,18 +159,25 @@ def parse_nexus_mods(items):
 		name = re.search(rest_RE, mod).group(1)
 		version = re.search(rest_RE, mod).group(2)
 		if get_nexus_mod_name:
-			modName = get_nexus_title_from_web(
-			'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
-			).replace(game_link_replacer,'')
+			modName, modCategoryN, modCategory = get_nexus_title_from_web(
+			'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/')
+			if modName == None:
+				print('\nGetting info from web failed for {0}\n skipping...\n'.format(name))
+				continue
+			else:
+				modName = modName.replace(game_link_replacer,'')
 		if debug:
+			print('file_name ', name + '-' + nexus_id + '-' + version + extension)
+			print('real_file_name', mod)
 			print('name ',name)
-			print('file_name', name + '-' + nexus_id + '-' + version + extension)
-			if get_nexus_mod_name:
-				print('mod_name', modName)
-			print('Is file_name correct? ', os.path.exists(os.path.join(os.getcwd(),mod)))
-			print('extension ',extension)
 			print('nexus_id ', nexus_id)
 			print('version', version)
+			print('extension ',extension)
+			print('Is file_name correct? ', os.path.exists(os.path.join(os.getcwd(),mod)))
+			if get_nexus_mod_name:
+				print('mod_name ', modName)
+				print('modCategoryN ', modCategoryN)
+				print('modCategory ', modCategory)	
 		print('Valited ',str(number) + '.' + name + '-' + nexus_id + '-' + version)
 		if get_nexus_mod_name:
 			result.append(modName + '-' + nexus_id)
@@ -178,6 +195,8 @@ def parse_nexus_mods(items):
 			d[str(number)]['description'] = 'INSERT_description'
 		if get_nexus_mod_name:
 			d[str(number)]['modName'] = modName
+			d[str(number)]['nexus_categoryN'] = modCategoryN
+			d[str(number)]['nexus_category'] = modCategory
 			if get_skyrimgems_desc:
 				d[str(number)]['skyrimgems_desc'] = search_skyrimgems_source(modName)
 		if ask_for_comment:
@@ -236,6 +255,7 @@ if makeDirs:
 						meta_file.write('name=' + mods[key]['name'] + '\n')
 						if get_nexus_mod_name:
 							meta_file.write('modName=' + mods[key]['modName'] + '\n')
+							meta_file.write('category=' + mods[key]['nexus_categoryN'] + '\n')
 						meta_file.write('version=' + mo_friendly_version_parser(mods[key]['version']) + '\n')
 
 if writeSummary:
@@ -243,9 +263,9 @@ if writeSummary:
 		try:
 			with open('summary.csv', 'w') as summary_csv_file:
 				if get_nexus_mod_name and get_skyrimgems_desc:
-					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version','description', 'comment', 'skyrimgems_desc']
+					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version','description', 'comment', 'skyrimgems_desc', 'nexus_categoryN', 'nexus_category']
 				elif get_nexus_mod_name:
-					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version', 'description', 'comment']
+					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version', 'description', 'comment', 'nexus_categoryN', 'nexus_category']
 				else:
 					fieldnames = ['modID', 'name', 'file_name', 'nexus_link' , 'version', 'description', 'comment']
 				csv_writer = csv.DictWriter(summary_csv_file,
@@ -265,7 +285,9 @@ if writeSummary:
 							'version': mo_friendly_version_parser((mods[key]['version'])),
 							'description': mods[key]['description'],
 							'comment': mods[key]['comment'],
-							'skyrimgems_desc': mods[key]['skyrimgems_desc']
+							'skyrimgems_desc': mods[key]['skyrimgems_desc'],
+							'nexus_categoryN': mods[key]['nexus_categoryN'],
+							'nexus_category': mods[key]['nexus_category']
 							})
 						elif get_nexus_mod_name:
 							csv_writer.writerow({
@@ -275,7 +297,9 @@ if writeSummary:
 							'nexus_link': mods[key]['nexus_link'],
 							'version': mo_friendly_version_parser((mods[key]['version'])), 
 							'description': mods[key]['description'],
-							'comment': mods[key]['comment']
+							'comment': mods[key]['comment'],
+							'nexus_categoryN': mods[key]['nexus_categoryN'],
+							'nexus_category': mods[key]['nexus_category']
 							})
 						else:
 							csv_writer.writerow({
