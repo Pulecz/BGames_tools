@@ -18,12 +18,15 @@ Then by using regex /\-(\d{2,})\-/ it will catch any Nexus Mod files and extract
 
 #####If allowed it will get from web:
   - ModName = because Name of File does not always suggest name of the mod like [here](http://www.nexusmods.com/skyrim/mods/30947) it will get title of the Nexus Page
+  - ModCategoryN = Number of category (MO uses it to determine the mod category)
+  - ModCategory = Name of the category, used in csv
   - SkyrimGems description - will try to get description about mod from [skyrimgems.com](http://skyrimgems.com/) (experimental)
 
 Then if allowed script will create folders with pattern "$ModName-$ModID" and if getting info from Nexus is not allowed (no internet connectivity) the folders will be named "$Name-$ModID.
 Files can be moved to those folders and meta files can be created for them. If then moved to downloads folder of [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/) it can read Name, ModName, ModID and version from the meta file.
 The version is formatted in MO way so version '2292e' is written as '2.2.9.2e', '4-0-1' as '4.0.1.0' and '3-0a' as '3.0.0.0a' and etc. This also applies for csv.
 Comment is also written to meta file and script can ask user for comment for each Mod. Comment line is not handled by ModOrganizer in any way as far as I know.
+Newly Nexus category number is also written to meta file, MO then chooses its own category for the mod.
 
 #####Options:
  - Game = 'Fallout 4' or 'Skyrim' (sets the links and few other option for each Game)
@@ -41,6 +44,11 @@ Comment is also written to meta file and script can ask user for comment for eac
 
 Every variable can be changed in first 40 lines.
 
+#####Known Issues
+  Mod pages with adult-content are not accesible without login, therefore if users allows getting information from web, all actions for this mod will be skipped and user has to disable getting the information so at least offline actions are done.
+  (This could be fixed, though...)
+
 #####Known Bugs
   Version conversion fail at [Full Dialogue Interface](http://www.nexusmods.com/fallout4/mods/1235/) for Fallout 4, because of the "uncommon" versioning
+  
 
