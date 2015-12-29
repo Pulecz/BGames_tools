@@ -7,6 +7,7 @@ from urllib.request import urlopen # for web_parsing
 #V05 - added description (another field added, which is actually comment, previous comment is the description), maybe some more improvements?
 #V06 - write meta file to each mod, write to csv, turn off dir_names_with_generated_numbers, get modName from nexus, get desc from skyrimgems
 #V07 - removed custom order, making dirs with numbers, def input_int and options to run with arguments
+#V08 - Fallout 4 Support
 
 """
 validates Nexus Mod files with pattern:
@@ -20,6 +21,8 @@ and creates directories, with pattern:
 """
 #-------------------------------------Input-------------------------------------
 nexus_id_RE = re.compile('\-(\d{2,})\-') #catch - two digits and - 
+#Game = 'Fallout 4'
+Game = 'Skyrim'
 number = 1
 debug = False
 writeSummary = True
@@ -32,9 +35,19 @@ ask_for_comment = False
 get_nexus_mod_name = True
 if get_nexus_mod_name:
 	get_skyrimgems_desc = True
+
+if Game == 'Fallout 4':
+	game_link = 'fallout4'
+	game_link_replacer = ' at ' + Game + ' Nexus - Mods and community'
+	get_skyrimgems_desc = False
+elif Game == 'Skyrim':
+	game_link = 'skyrim'
+	game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
+else:
+	print('Game {0} is not recognized as a valid option.\nHit any key to exit.'.format(Game))
+	input()
+	exit()
 #-------------------------------------Defs--------------------------------------
-
-
 def get_skyrimgems_source():
 	try: # handle if url is not reachable error
 		foo = urlopen('http://www.skyrimgems.com')
@@ -46,7 +59,7 @@ def get_skyrimgems_source():
 
 	
 def search_skyrimgems_source(modName):
-	descriptions_RE = '.*' + modName + '.*\n\s+\<td\s\w+\S+\>([\w\s\'\"\,\.\(\)\-\[\]\<\>+=\/\:&#39;]*)<\Std\>'
+	descriptions_RE = '.*' + modName + '.*\n\s+\<td\s\w+\S+\>(.*)<\Std\>'
 	try:
 		return re.search(descriptions_RE,skyrimgems_source).group(1)
 	except AttributeError as re_e:
@@ -137,8 +150,8 @@ def parse_nexus_mods(items):
 		version = re.search(rest_RE, mod).group(2)
 		if get_nexus_mod_name:
 			modName = get_nexus_title_from_web(
-			'http://www.nexusmods.com/skyrim/mods/' + nexus_id + '/?'
-			).replace(' at Skyrim Nexus - mods and community','')
+			'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
+			).replace(game_link_replacer,'')
 		if debug:
 			print('name ',name)
 			print('file_name', name + '-' + nexus_id + '-' + version + extension)
@@ -157,7 +170,7 @@ def parse_nexus_mods(items):
 		d[str(number)]['name'] = name
 		d[str(number)]['file_name'] = name + '-' + nexus_id + '-' + version + extension
 		d[str(number)]['modID'] = nexus_id
-		d[str(number)]['nexus_link'] = 'http://www.nexusmods.com/skyrim/mods/' + nexus_id + '/?'
+		d[str(number)]['nexus_link'] = 'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
 		d[str(number)]['version'] = version
 		if ask_for_description:
 			d[str(number)]['description'] = input('Insert your description: ')
@@ -230,7 +243,7 @@ if writeSummary:
 		try:
 			with open('summary.csv', 'w') as summary_csv_file:
 				if get_nexus_mod_name and get_skyrimgems_desc:
-					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version', 'skyrimgems_desc' ,'description', 'comment']
+					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version','description', 'comment', 'skyrimgems_desc']
 				elif get_nexus_mod_name:
 					fieldnames = ['modID', 'modName', 'file_name', 'nexus_link' , 'version', 'description', 'comment']
 				else:
@@ -250,9 +263,9 @@ if writeSummary:
 							'file_name': mods[key]['file_name'],
 							'nexus_link': mods[key]['nexus_link'],
 							'version': mo_friendly_version_parser((mods[key]['version'])),
-							'skyrimgems_desc': mods[key]['skyrimgems_desc'],
 							'description': mods[key]['description'],
 							'comment': mods[key]['comment'],
+							'skyrimgems_desc': mods[key]['skyrimgems_desc']
 							})
 						elif get_nexus_mod_name:
 							csv_writer.writerow({
@@ -262,7 +275,7 @@ if writeSummary:
 							'nexus_link': mods[key]['nexus_link'],
 							'version': mo_friendly_version_parser((mods[key]['version'])), 
 							'description': mods[key]['description'],
-							'comment': mods[key]['comment'],
+							'comment': mods[key]['comment']
 							})
 						else:
 							csv_writer.writerow({
@@ -272,7 +285,7 @@ if writeSummary:
 							'nexus_link': mods[key]['nexus_link'],
 							'version': mo_friendly_version_parser((mods[key]['version'])), 
 							'description': mods[key]['description'],
-							'comment': mods[key]['comment'],
+							'comment': mods[key]['comment']
 							})
 		except PermissionError as opened_csv:
 			print(opened_csv)
