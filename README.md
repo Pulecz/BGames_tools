@@ -49,6 +49,7 @@ Every variable can be changed in first 40 lines.
   (This could be fixed, though...)
 
 #####Known Bugs
-  Version conversion fail at [Full Dialogue Interface](http://www.nexusmods.com/fallout4/mods/1235/) for Fallout 4, because of the "uncommon" versioning
+  - Version conversion fail at [Full Dialogue Interface](http://www.nexusmods.com/fallout4/mods/1235/) for Fallout 4, because of the "uncommon" versioning
+  - Files with pattern $name$version$modid$version get parsed incorrectly as the regex is not sure what is version and what modid. For example SMIM 1-89-8655-1-89.7z, the first 89 is caught with regex /\-(\d{2,})\-/. ...guess I need better regex skills
   
 
