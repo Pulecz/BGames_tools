@@ -45,8 +45,8 @@ Newly Nexus category number is also written to meta file, MO then chooses its ow
 Every variable can be changed in first 40 lines.
 
 #####Known Issues
-  Mod pages with adult-content are not accesible without login, therefore if users allows getting information from web, all actions for this mod will be skipped and user has to disable getting the information so at least offline actions are done.
-  (This could be fixed, though...)
+  - Mod Organizer deletes the meta files after (manual) moving them to download folder
+  - **TOFIX** Mod pages with adult-content are not accesible without login, therefore if users allows getting information from web, only title can be extracted, only categories will be skipped. Currently in such situation all action are skipped.
 
 #####Known Bugs
   - Version conversion fail at [Full Dialogue Interface](http://www.nexusmods.com/fallout4/mods/1235/) for Fallout 4, because of the "uncommon" versioning
