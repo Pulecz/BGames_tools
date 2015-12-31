@@ -22,11 +22,29 @@ Then by using regex /\-(\d{2,})\-/ it will catch any Nexus Mod files and extract
   - ModCategory = Name of the category, used in csv
   - SkyrimGems description - will try to get description about mod from [skyrimgems.com](http://skyrimgems.com/) (experimental)
 
-Then if allowed script will create folders with pattern "$ModName-$ModID" and if getting info from Nexus is not allowed (no internet connectivity) the folders will be named "$Name-$ModID.
-Files can be moved to those folders and meta files can be created for them. If then moved to downloads folder of [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/) it can read Name, ModName, ModID and version from the meta file.
-The version is formatted in MO way so version '2292e' is written as '2.2.9.2e', '4-0-1' as '4.0.1.0' and '3-0a' as '3.0.0.0a' and etc. This also applies for csv. (**this also turns out to be experimental**)
-Comment is also written to meta file and script can ask user for comment for each Mod. Comment line is not handled by ModOrganizer in any way as far as I know.
-Newly Nexus category number is also written to meta file, MO then chooses its own category for the mod.
+#####The scripts does the following:
+1. Scans the current working folder (folder where the scripts is used)
+2. Try to validate each file through regex filter to validate any mods with Nexus Mod file pattern
+3. Collects choosen info about the mod or asks for comment or description if allowed
+4. If allowed, script will will create folders with pattern "$ModName-$ModID" and 
+  - If getting info from Nexus is not allowed (no internet connectivity) the folders will be named "$Name-$ModID.
+5. If allowed files will be moved to the created folders
+6. If allowed meta files will be created for each mod.
+  - Meta files are useful when you move the mod with them to downloads folder of [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/) it can read Name, ModName, ModID and version from the meta file, but it often deletes the meta file for some reason first.
+  - Comment is also written to meta file. Comment line is not handled by ModOrganizer in any way (it will not delete it from the meta file after querying its own info) AFAIK. Could be useful for something though.
+7. If debug is on, then the python's dictionary with all the collected info about mod is written in summary.json (json editors should be able to open it)
+8. If writeSummary is allowed, summary.csv is created, if its still open by something that does not allow to manipulate it(Libre Office Calc) scripts tells that to user and asks for confirmation to try saving again.
+  - **Warning** if file is not used, it gets simply overwritten
+
+The version is formatted in MO way so version:
+  - '2292e' is written as '2.2.9.2e',
+  - '4-0-1' as '4.0.1.0'
+  - '3-0a' as '3.0.0.0a' and etc.
+However this sometimes fails, currently there is no option to turn this off (**todo simple switch**)
+This also applies for csv. (**todo also switch**)
+
+Categories in meta files are numbered based on Nexus Mods Skyrim categories(I don't have info about FO4 MO yet), after instaling the mods, number in meta of the mods is numbered in Mod Organizers way.
+
 
 #####Options:
  - Game = 'Fallout 4' or 'Skyrim' (sets the links and few other option for each Game)
