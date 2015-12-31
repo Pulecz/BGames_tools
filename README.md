@@ -24,7 +24,7 @@ Then by using regex /\-(\d{2,})\-/ it will catch any Nexus Mod files and extract
 
 Then if allowed script will create folders with pattern "$ModName-$ModID" and if getting info from Nexus is not allowed (no internet connectivity) the folders will be named "$Name-$ModID.
 Files can be moved to those folders and meta files can be created for them. If then moved to downloads folder of [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/) it can read Name, ModName, ModID and version from the meta file.
-The version is formatted in MO way so version '2292e' is written as '2.2.9.2e', '4-0-1' as '4.0.1.0' and '3-0a' as '3.0.0.0a' and etc. This also applies for csv.
+The version is formatted in MO way so version '2292e' is written as '2.2.9.2e', '4-0-1' as '4.0.1.0' and '3-0a' as '3.0.0.0a' and etc. This also applies for csv. (**this also turns out to be experimental**)
 Comment is also written to meta file and script can ask user for comment for each Mod. Comment line is not handled by ModOrganizer in any way as far as I know.
 Newly Nexus category number is also written to meta file, MO then chooses its own category for the mod.
 
@@ -46,10 +46,10 @@ Every variable can be changed in first 40 lines.
 
 #####Known Issues
   - Mod Organizer deletes the meta files after (manual) moving them to download folder
-  - **TOFIX** Mod pages with adult-content are not accesible without login, therefore if users allows getting information from web, only title can be extracted, only categories will be skipped. Currently in such situation all action are skipped.
-
+  
 #####Known Bugs
   - Version conversion fail at [Full Dialogue Interface](http://www.nexusmods.com/fallout4/mods/1235/) for Fallout 4, because of the "uncommon" versioning
   - Files with pattern $name$version$modid$version get parsed incorrectly as the regex is not sure what is version and what modid. For example SMIM 1-89-8655-1-89.7z, the first 89 is caught with regex /\-(\d{2,})\-/. ...guess I need better regex skills
-  
+  - Mod pages with adult-content are not accesible without login, therefore if users allows getting information from web, only title can be extracted, only categories will be skipped. Currently in such situation all action are skipped.
+  - Some queries for skyrimgems info fail, because is seaches for whole modName, shorter search must be performed
 
