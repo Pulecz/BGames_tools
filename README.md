@@ -23,6 +23,8 @@ Then by using regex /\-(\d{2,})\-/ it will catch any Nexus Mod files and extract
   - SkyrimGems description - will try to get description about mod from [skyrimgems.com](http://skyrimgems.com/) (experimental)
 
 #####The scripts does the following:
+0. Validates the Game variable and change a option based on that and prepares few variables
+  - If Game variable validation fails, scripts tells it to user and awaits confirmation
 1. Scans the current working folder (folder where the scripts is used)
 2. Try to validate each file through regex filter to validate any mods with Nexus Mod file pattern
 3. Collects choosen info about the mod or asks for comment or description if allowed
