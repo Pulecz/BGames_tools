@@ -7,7 +7,7 @@ Skyrim Launcher needs to be run at least once, to create entry in registry.
 
 The install_repo_dir or "local repo" needs to be prepared manually, described in next section [here](../master/README.md#preparation-of-local_repo).
 
-The script tries to do some of the things described in [Skyrim Revisited - Legendary Edition] Guide(http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition)
+The script tries to do some of the things described in [Skyrim Revisited - Legendary Edition Guide](http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition).
 
 Everything is unpacked using 7z.exe, therefore [7zip](http://www.7-zip.org/) installed in (one of the) Program Files is required.
 
