@@ -19,10 +19,13 @@ Everything is unpacked using 7z.exe , therefore [7zip](http://www.7-zip.org/) in
 The rest is future.
 
 If you wish to edit what scripts install, comment or delete one of these lines.
-ASI_base_install module is documented in the next section here.
 
-imports ASI_base_install and do the base install.
+ASI_base_install module is documented in the next section [here](../master/README.md#asi_base_installpy).
 
+Load ASI_base_install module, if 7z does not exist, exit 1 here.
+```python
+import ASI_base_install # loading of this module causes lust for 7z binary
+```
 Prompts the user to confirm or edit the directories and loads skyrim_dir and skyrim_mods_dir to script, to be used later.
 ```python
 skyrim_dir, skyrim_mods_dir = ASI_base_install.confirm_dirs()
@@ -65,6 +68,8 @@ ASI_base_install.TES5E_install()
 ```
 
 ### ASI_base_install.py
+
+Remains to be done, hopefully in the meantime the script itself is readable as it is.
 
 ### mod_name_validator.py
 
