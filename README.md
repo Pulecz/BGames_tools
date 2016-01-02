@@ -5,6 +5,8 @@ Script to prepare fresh Skyrim installation for modding.
 
 Skyrim Launcher needs to be run at least once, to create entry in registry.
 
+The install_repo_dir or "local repo" needs to be prepared manually, described in next section [here](../master/README.md#Preparation of local_repo).
+
 Everything is unpacked using 7z.exe, therefore [7zip](http://www.7-zip.org/) installed in (one of the) Program Files is required.
 
 #####The scripts does the following:
@@ -73,6 +75,40 @@ ASI_base_install.TES5E_install()
 ### ASI_base_install.py
 
 Remains to be done, hopefully in the meantime the script itself is readable as it is.
+
+####Preparation of local_repo
+Scripts expects to have install_repo folder in same folder where the script is with following files:
+```json
+{
+	"MO_install_7zarchive" : "Mod Organizer v1_3_11-1334-1-3-11.7z",
+	"MO_installer" : "Mod Organizer v1_3_11 installer-1334-1-3-11.exe",
+	"SKSE_install_7zarchive" : "skse_1_07_03.7z",
+	"SKSE_installer" :"skse_1_07_03_installer.exe",
+	"ENB_install_archive" : "enbseries_skyrim_v0290.zip",
+	"LOOT_install_7zarchive" : "LOOT.v0.8.1.7z",
+	#"LOOT_install_7zarchive" : "LOOT v0.8.1-53-gaac5583 - Snapshot-5310-0-8-1-53.7z",
+	"WRYE_BASH_install_7zarchive" : "Wrye Bash 306 - Standalone Executable-1840-306.7z",
+	"TES5E_install_7zarchive" : "TES5Edit 3.1.2-25859-3-1-2.7z"
+}
+```
+
+ * Get [MO_install](http://www.nexusmods.com/skyrim/mods/1334/).
+
+ * Get [SKSE_install](http://skse.silverlock.org).
+
+ * Get [ENB_install](http://enbdev.com/download_mod_tesskyrim.html).
+
+ * Get [LOOT_install](https://loot.github.io/).
+
+  * On Windows 10 I had issues with LOOT from github.io, so I used the [LOOT for Fallout 4](http://www.nexusmods.com/fallout4/mods/5310/).
+
+* Get [WRYE_BASH_install](http://www.nexusmods.com/skyrim/mods/1840/).
+
+* Get [TES5E_install](http://www.nexusmods.com/skyrim/mods/25859/).
+
+MO_installer and SKSE_installer are not required, because they are not used. Functions to use them are prepared and working though.
+
+You don't need to have exact versions of the files, as long as the structure inside the archives does not change much, everything should work.
 
 ### mod_name_validator.py
 
