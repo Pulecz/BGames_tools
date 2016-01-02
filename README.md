@@ -1,8 +1,11 @@
 # SkyrimModding
 
 ### main.py
-Script to prepare fresh Skyrim installation (Skyrim Launcher needs to be run at least once, to create entry in registry) for modding.
-Everything is unpacked using 7z.exe , therefore [7zip](http://www.7-zip.org/) installed in (one of the) Program Files is required.
+Script to prepare fresh Skyrim installation for modding.
+
+Skyrim Launcher needs to be run at least once, to create entry in registry.
+
+Everything is unpacked using 7z.exe, therefore [7zip](http://www.7-zip.org/) installed in (one of the) Program Files is required.
 
 #####The scripts does the following:
 1. Checks if 7z.exe exist in Program Files/7-Zip.
