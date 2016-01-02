@@ -1,5 +1,71 @@
 # SkyrimModding
 
+### main.py
+Script to prepare fresh Skyrim installation (Skyrim Launcher needs to be run at least once, to create entry in registry) for modding.
+Everything is unpacked using 7z.exe , therefore [7zip](http://www.7-zip.org/) installed in (one of the) Program Files is required.
+
+#####The scripts does the following:
+1. Checks if 7z.exe exist in Program Files/7-Zip.
+2. Validates the Skyrim and Skyrim Mods folder, prompts user to confirm them or edit them.
+3. Unpacks [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/)
+4. Writes ModOrganizer.ini with paths to other tools and few settings from [here](http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Configure_Mod_Organizer).
+5. Unpacks [SKSE](http://skse.silverlock.org) to Skyrim root folder and scripts to Skyrim/data.
+6. Unpacks 'WrapperVersion/d3d9.dll' and 'WrapperVersion/enbhost.exe' from [ENB](http://enbdev.com/download_mod_tesskyrim.html) archive to Skyrim root folder.
+7. Unpacks [LOOT](https://loot.github.io/) to Mods Folder.
+8. Unpacks [Wrye Bash](http://www.nexusmods.com/skyrim/mods/1840/) to Mods Folder.
+9. Unpacks [TES5Edit](http://www.nexusmods.com/skyrim/mods/25859/) to Mods Folder.
+10. If allowed prints some guidance.
+
+The rest is future.
+
+If you wish to edit what scripts install, comment or delete one of these lines.
+ASI_base_install module is documented in the next section here.
+
+imports ASI_base_install and do the base install.
+
+Prompts the user to confirm or edit the directories and loads skyrim_dir and skyrim_mods_dir to script, to be used later.
+```python
+skyrim_dir, skyrim_mods_dir = ASI_base_install.confirm_dirs()
+```
+Creates directory in Skyrim folder.
+```python
+ASI_base_install.make_mods_folder_in_base() #can cause exit 2
+```
+Unpacks [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/)
+```python
+ASI_base_install.MO_install()
+```
+Writes ModOrganizer.ini with paths to other tools and few settings from [here](http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Configure_Mod_Organizer).
+
+Launching MO Installer is possible, but not really necessary, only setting unchecked in installer is handling Nexus Links and shortcut to start menu. User is prompted in first MO's start to handle Nexus links and people who want shortcut can make it. :-)
+```python
+ASI_base_install.write_MO_ini()
+```
+Unpacks [SKSE](http://skse.silverlock.org) to Skyrim root folder and scripts to Skyrim/data.
+
+In order to launch installer, admin rights are required if using UAC, therefore is not used.
+```python
+ASI_base_install.SKSE_install()
+```
+Unpacks 'WrapperVersion/d3d9.dll' and 'WrapperVersion/enbhost.exe' from [ENB](http://enbdev.com/download_mod_tesskyrim.html) archive to Skyrim root folder.
+```python
+ASI_base_install.ENB_install()
+```
+Unpacks [LOOT](https://loot.github.io/) to Mods Folder.
+```python
+ASI_base_install.LOOT_install()
+```
+Unpacks [Wrye Bash](http://www.nexusmods.com/skyrim/mods/1840/) to Mods Folder.
+```python
+ASI_base_install.WRYE_BASH_install()
+```
+Unpacks [TES5Edit](http://www.nexusmods.com/skyrim/mods/25859/) to Mods Folder.
+```python
+ASI_base_install.TES5E_install()
+```
+
+### ASI_base_install.py
+
 ### mod_name_validator.py
 
 Script to sort Nexus Mods to folders, with pattern ($nexusid-$name) and write summary.csv with information extracted.
