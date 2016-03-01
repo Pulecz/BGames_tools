@@ -5,8 +5,10 @@ from collections import OrderedDict
 def get_skyrim_dir():
 	wincmd_req_query_skyrim_dir='REG QUERY "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim" /v "installed path" /t REG_SZ'
 	skyrim_dir_mess = subprocess.check_output(wincmd_req_query_skyrim_dir)
-	##rfind('End of search') might depend on language
-	skyrim_dir = str(skyrim_dir_mess)[str(skyrim_dir_mess).find('REG_SZ')+6:str(skyrim_dir_mess).rfind('End of search')].strip().replace('\\r\\n\\r\\n','')
+	skyrim_dir = str(skyrim_dir_mess)[str(skyrim_dir_mess)
+	.find('REG_SZ')+len('REG_SZ'):str(skyrim_dir_mess)
+	.rfind('\\r\\n\\r\\n')] \
+	.strip().replace('\\\\','\\')
 	return skyrim_dir
 
 	
