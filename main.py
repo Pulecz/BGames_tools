@@ -1,23 +1,77 @@
-import ASI_base_install # loading of this module causes lust for 7z binary
+#main V0.1
+#TODO, m0prerequisites needs better handling
+#TODO, load json here and just give neceasery input to modules
+#TODO write plugins.txt, loadorder.txt, skyrim.ini to MO profile, NMM?
+#BIG TODO from json, push mod ids to downloader
 
+import os, json
+import sys
+
+#------------------------------------config------------------------------------
+json_file = 'mod_list_config.json'
+wget_in_use_bug = True
+#-------------------------------------defs-------------------------------------
+#loading the json
+def load_json(json_file):
+	if os.path.exists(json_file):
+		with open(json_file, 'r') as input_file:
+			input_json = json.load(input_file)
+	else:
+		print('FAIL: File {0} does not exist'.format(json_file))
+		print('FAIL: Exit 1')
+		sys.exit(1)
+	return input_json
+
+import m0prerequisites # config for urls of utilities is there, TODO move to JSON
+import m1download_utils # path to download the utilities is setup there, also TODO move to JSON
+import m2utils_install # loading of this module causes lust for 7z binary, TODO fix a LOT
+
+#-------------------------------0. Prerequisites-------------------------------
+m0prerequisites.get_skyrim_dir()
+
+input_json = load_json(json_file) #can cause exit 1 if file not found
+
+
+for utility in input_json['base_utilities']:
+	if utility['name'] == '7zip':
+		w7zip_urls = utility['download']
+	if utility['name'] == 'wget':
+		wget_urls = utility['download']
+		
+
+#TODO check what can fail here
+if wget_in_use_bug:
+	wget_path = 'bin//wget.exe'
+else:
+	wget_path = m0prerequisites.unpack_to_bin(m0prerequisites.download(wget_urls,'tmp'))
+sevenzip_path = m0prerequisites.unpack_to_bin(m0prerequisites.download(w7zip_urls,'tmp'))
+#TODO make this nicer and understandable
+if isinstance(m0prerequisites.get_sevenzip_dir(), str):
+	sevenzip_path = m0prerequisites.get_sevenzip_dir() #meh, needs TODO from function
+else:
+	sevenzip_path = m0prerequisites.unpack_to_bin(download(w7zip_urls,'tmp'))
+
+print('Base utility for downloading: ' + wget_path) #give it to next module	
+print('Base utility for unpacking:'  + sevenzip_path) #give it to next module
+m0prerequisites.cleanup()
+
+#DOWNLOAD ALL UTILITIES
+m1download_utils.download_all(input_json)
+#-------------------------------1. Install base--------------------------------
 base_install = True
-
-#------------------------------0. Install base----------------------------------
-#todo check if Skyrim was launched at least once (so its in a registry and all)
-#todo install sumarry, what was installed sucessfuly and what not
+#TODO install sumarry, what was installed sucessfuly and what not
 if base_install:
-	skyrim_dir, skyrim_mods_dir = ASI_base_install.confirm_dirs()
-	ASI_base_install.make_mods_folder_in_base() #can cause exit 2
-	ASI_base_install.MO_install()
-	ASI_base_install.write_MO_ini()
-	ASI_base_install.SKSE_install()
-	ASI_base_install.ENB_install()
-	ASI_base_install.LOOT_install()
-	ASI_base_install.WRYE_BASH_install()
-	ASI_base_install.TES5E_install()
-	#ASI_base_install.validate() #validate all
+	skyrim_dir, skyrim_mods_dir = m0prerequisites.confirm_dirs()
+	m2utils_install.make_mods_folder_in_base(skyrim_mods_dir) #can cause exit 3
+	m2utils_install.MO_install(skyrim_mods_dir)
+	m2utils_install.SKSE_install(skyrim_dir, skyrim_mods_dir)
+	m2utils_install.ENB_install(skyrim_dir, skyrim_mods_dir)
+	m2utils_install.TES5E_install(skyrim_mods_dir)
+	m2utils_install.Mash_install(skyrim_mods_dir)
+	m2utils_install.write_MO_ini(skyrim_mods_dir)
+	#m2utils_install.validate() #validate all
 
-#-------------------------------1. Manual Work----------------------------------
+#--------------------------------2. Manual Work--------------------------------
 print_guidance = False
 
 if print_guidance:
@@ -27,11 +81,15 @@ if print_guidance:
 	input('Confirm by any key when done')
 
 
-#--------2. test--------
+# -----------------------------------3.test------------------------------------
 #to unpack backup
-##ASI_base_install.use_sevenzip('x','e:\\project\\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z',skyrim_mods_dir + '\\ModOrganizer')
+##m2utils_install.use_sevenzip('x','e:\\project\\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z',skyrim_mods_dir + '\\ModOrganizer')
 #to do a backup
-##ASI_base_install.use_sevenzip('a -t7z','d:\\games_stuff\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z','d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\profiles d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\overwrite d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\mods')
+##m2utils_install.use_sevenzip('a -t7z','d:\\games_stuff\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z','d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\profiles d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\overwrite d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\mods')
+
+"""known issues
+	bin//wget is in use and m0prerequisites tries to overwrite that, TODO fix
+"""
 
 """what next
 	0.separate package manager which would accept commands:
@@ -48,12 +106,11 @@ if print_guidance:
 		Mod Organizer\Downloads folder and
 		let user install the mods to his Mods folder
 """
-#--------------------------------Return Codes-----------------------------------
+#---------------------------------Return Codes---------------------------------
 """ RC
 	0 all ok
-	1 no 7z binary in ProgramFiles
-	2 failed to create directory skyrim_mods_dir
+	1 json_file not found
+	2 no 7z binary in ProgramFiles
+	3 failed to create directory skyrim_mods_dir
+	99 Skyrim was not yet launched
 """
-
-#--------------------------------Manual Guide-----------------------------------
-#in howto
