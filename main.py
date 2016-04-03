@@ -6,8 +6,8 @@
 #TODO write plugins.txt, loadorder.txt, skyrim.ini to MO profile, NMM?
 #BIG TODO from json, push mod ids to downloader
 
-import os, json
-import sys
+import os, json #for checking and loading json file
+import sys # for exits
 
 #------------------------------------config------------------------------------
 json_file = 'mod_list_config.json'

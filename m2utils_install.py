@@ -1,4 +1,4 @@
-#m2utils_install V0.4
+#m2utils_install V0.5
 #NOT PYTHONIC, 7zip calls can be replaced by lzma https://docs.python.org/3/library/lzma.html
 
 """ change-log
@@ -20,7 +20,7 @@
 	and just about everything which is marked as #TODO
 """
 
-import sys, os, subprocess, zipfile
+import os, subprocess, zipfile #for checking files, calling 7z and unpacking ENB
 
 #-----------------------------Install ModOrganizer-----------------------------
 #this is totally crazy and I do this just for fun and its still WIP

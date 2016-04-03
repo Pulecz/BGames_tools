@@ -6,10 +6,10 @@
 #TODO probably push all the Skyrim and software checkers for utilities to here
 
 
-import os, urllib.request, re
-import zipfile
-import subprocess
-import shutil
+import os, urllib.request, re #for checking files and downloading #TODO remove re
+import zipfile #for unpack_to_bin
+import subprocess # for reading registry (perhaps there is a library for that)
+import shutil # for cleanup
 import sys # only one use, get_skyrim_dir can return something and main can exit
 
 #TODO check the regex

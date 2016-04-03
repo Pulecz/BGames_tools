@@ -4,7 +4,7 @@
 #V0.3, no config is here, main sends everything
 #NOT PYTHONIC, wget handles urls with bad ssl certificates and the referalls
 
-import subprocess, os
+import subprocess, os #for use_wget and checking files
 
 def use_wget(wget_bin, args):#
 	wget_command = wget_bin + ' ' + args
