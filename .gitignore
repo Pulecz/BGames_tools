@@ -1,1 +1,6 @@
 __pycache__/
+bin/
+utilities/
+tmp/
+mod_list_config.json
+test_json.py
