@@ -3,6 +3,7 @@
 #V0.2, just definitions here, the control is moved to main.py
 #V0.3, no config is here, main sends everything
 #NOT PYTHONIC, wget handles urls with bad ssl certificates and the referalls
+#TODO this should all be replaced with regular download thing in m0
 
 import subprocess, os #for use_wget and checking files
 
@@ -40,26 +41,3 @@ def download_all(wget_bin, input_json, destination):
 			filenames.append(utility['download'][utility['download'].rfind('/') + 1 :])
 	return filenames
 		#BIG TODO do the checks that everything is download correctly
-
-def get_utilities_paths(utilities_location, filenames): #TODO md5sum check
-	for file in filenames:
-		#TODO this wants specific order, fix that
-		#hotfix
-		if 'enbseries' in file:
-			ENB_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-			##ENB_install_fullpath = os.path.join(os.getcwd(),utilities_location, ENB_install_archive)
-		if 'Mator' in file:
-			##Mash_install_fullpath = os.path.join(os.getcwd(),utilities_location, Mash_install_archive)
-			Mash_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-		if 'ModOrganizer' in file:
-			##MO_install_fullpath = os.path.join(os.getcwd(),utilities_location, MO_install_7zarchive)
-			MO_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-		##if 'NMM' in file: #to be implented
-			#NMM_install_fullpath = os.path.join(os.getcwd(),utilities_location, NMM_install_7zarchive)
-		if 'skse' in file:
-			##SKSE_install_fullpath = os.path.join(os.getcwd(),utilities_location, SKSE_install_7zarchive)
-			SKSE_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-		if 'TES5' in file:
-			##TES5E_install_fullpath = os.path.join(os.getcwd(),utilities_location, TES5E_install_7zarchive)
-			TES5E_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-	return ENB_install_fullpath, Mash_install_fullpath, MO_install_fullpath, SKSE_install_fullpath, TES5E_install_fullpath

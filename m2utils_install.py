@@ -23,6 +23,30 @@
 import os, subprocess, zipfile #for checking files, calling 7z and unpacking ENB
 
 #-----------------------------Install ModOrganizer-----------------------------
+def get_utilities_paths(utilities_location, filenames): #TODO md5sum check
+	for file in filenames:
+		#TODO this wants specific order, fix that
+		#hotfix
+		if 'enbseries' in file:
+			ENB_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
+			##ENB_install_fullpath = os.path.join(os.getcwd(),utilities_location, ENB_install_archive)
+		if 'Mator' in file:
+			##Mash_install_fullpath = os.path.join(os.getcwd(),utilities_location, Mash_install_archive)
+			Mash_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
+		if 'ModOrganizer' in file:
+			##MO_install_fullpath = os.path.join(os.getcwd(),utilities_location, MO_install_7zarchive)
+			MO_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
+		##if 'NMM' in file: #to be implented
+			#NMM_install_fullpath = os.path.join(os.getcwd(),utilities_location, NMM_install_7zarchive)
+		if 'skse' in file:
+			##SKSE_install_fullpath = os.path.join(os.getcwd(),utilities_location, SKSE_install_7zarchive)
+			SKSE_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
+		if 'TES5' in file:
+			##TES5E_install_fullpath = os.path.join(os.getcwd(),utilities_location, TES5E_install_7zarchive)
+			TES5E_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
+	return ENB_install_fullpath, Mash_install_fullpath, MO_install_fullpath, SKSE_install_fullpath, TES5E_install_fullpath
+
+
 #this is totally crazy and I do this just for fun and its still WIP
 def MO_fix_archive(sevenzip_bin, MO_install_fullpath):
 	#remove the folder from the archive by renaming each file

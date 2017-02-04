@@ -12,8 +12,24 @@ import subprocess # for reading registry (perhaps there is a library for that)
 import shutil # for cleanup
 import sys # only one use, get_skyrim_dir can return something and main can exit
 
-#TODO check the regex
+
+def get_skyrim_dir(): #can cause exit 99
+	#TODO use https://docs.python.org/3/library/winreg.html
+	#TODO check if this regex path is always the same
+	wincmd_req_query_skyrim_dir='REG QUERY "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim" /v "installed path" /t REG_SZ'
+	try:
+		skyrim_dir_mess = subprocess.check_output(wincmd_req_query_skyrim_dir)
+	except subprocess.CalledProcessError as e:
+		raise ValueError
+	skyrim_dir = str(skyrim_dir_mess)[str(skyrim_dir_mess)
+	.find('REG_SZ')+len('REG_SZ'):str(skyrim_dir_mess)
+	.rfind('\\r\\n\\r\\n')] \
+	.strip().replace('\\\\','\\')
+	return skyrim_dir
+
+
 def download(urls, target=''): #urls must be list of at least two, TODO...
+	#TODO check the regex
 	#download_try = 0 # TODO some function with try for more mirrors?
 	urls_regex = re.compile('.*[=\/](.*)') #TODO fix it (URL[URL.rfind('/') + 1 :])
 	if len(target) > 1: #only if target is defined
@@ -69,21 +85,6 @@ def get_sevenzip_dir():
 	.rfind('\\r\\n\\r\\n')].strip() \
 	.replace('\\\\','\\')
 	return sevenzip_dir
-
-
-def get_skyrim_dir(): #can cause exit 99
-	#TODO check if this regex path is always the same
-	wincmd_req_query_skyrim_dir='REG QUERY "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim" /v "installed path" /t REG_SZ'
-	try:
-		skyrim_dir_mess = subprocess.check_output(wincmd_req_query_skyrim_dir)
-	except subprocess.CalledProcessError as e:
-		print('No registry entry for Skyrim, either run Skyrim at least once')
-		sys.exit(99)
-	skyrim_dir = str(skyrim_dir_mess)[str(skyrim_dir_mess)
-	.find('REG_SZ')+len('REG_SZ'):str(skyrim_dir_mess)
-	.rfind('\\r\\n\\r\\n')] \
-	.strip().replace('\\\\','\\')
-	return skyrim_dir
 
 
 def confirm_skyrim_dirs():
