@@ -1,163 +1,173 @@
 {
-	"base_utilities": [{
-		"name": "7zip",
-		"version": "1.0",
-		"download": ["http://7-zip.org/a/7za920.zip", "http://7-zip.org/a/7za920.zip"],
-		"install_path": "bin\\"
-	}, {
-		"name": "wget",
-		"version": "1.0",
-		"download": ["https://eternallybored.org/misc/wget/releases/wget-1.18-win32.zip", "https://eternallybored.org/misc/wget/releases/old/wget-1.17-win32.zip"],
-		"install_path": "bin\\"
-	}],
-	"utilities": [{
-		"name": "Mod Organizer",
-		"version": "1.3.10",
-		"download": "http://iweb.dl.sourceforge.net/project/modorganizer/ModOrganizer_v1.3.10.7z",
-		"install_path": "%SkyrimPath%\\Mods\\ModOrganizer"
-	}, {
-		"name": "SKSE",
-		"version": "1.7.3",
-		"download": "http://skse.silverlock.org/beta/skse_1_07_03.7z",
-		"SKSE_wanted_files": [
-			"skse_1_07_03\\skse_readme.txt",
-			"skse_1_07_03\\skse_whatsnew.txt",
-			"skse_1_07_03\\Data\\scripts\\activemagiceffect.pex",
-			"skse_1_07_03\\Data\\scripts\\actor.pex",
-			"skse_1_07_03\\Data\\scripts\\actorbase.pex",
-			"skse_1_07_03\\Data\\scripts\\actorvalueinfo.pex",
-			"skse_1_07_03\\Data\\scripts\\alias.pex",
-			"skse_1_07_03\\Data\\scripts\\ammo.pex",
-			"skse_1_07_03\\Data\\scripts\\apparatus.pex",
-			"skse_1_07_03\\Data\\scripts\\armor.pex",
-			"skse_1_07_03\\Data\\scripts\\armoraddon.pex",
-			"skse_1_07_03\\Data\\scripts\\art.pex",
-			"skse_1_07_03\\Data\\scripts\\book.pex",
-			"skse_1_07_03\\Data\\scripts\\cell.pex",
-			"skse_1_07_03\\Data\\scripts\\colorcomponent.pex",
-			"skse_1_07_03\\Data\\scripts\\colorform.pex",
-			"skse_1_07_03\\Data\\scripts\\combatstyle.pex",
-			"skse_1_07_03\\Data\\scripts\\constructibleobject.pex",
-			"skse_1_07_03\\Data\\scripts\\defaultobjectmanager.pex",
-			"skse_1_07_03\\Data\\scripts\\enchantment.pex",
-			"skse_1_07_03\\Data\\scripts\\equipslot.pex",
-			"skse_1_07_03\\Data\\scripts\\faction.pex",
-			"skse_1_07_03\\Data\\scripts\\flora.pex",
-			"skse_1_07_03\\Data\\scripts\\form.pex",
-			"skse_1_07_03\\Data\\scripts\\formlist.pex",
-			"skse_1_07_03\\Data\\scripts\\formtype.pex",
-			"skse_1_07_03\\Data\\scripts\\game.pex",
-			"skse_1_07_03\\Data\\scripts\\gamedata.pex",
-			"skse_1_07_03\\Data\\scripts\\headpart.pex",
-			"skse_1_07_03\\Data\\scripts\\ingredient.pex",
-			"skse_1_07_03\\Data\\scripts\\input.pex",
-			"skse_1_07_03\\Data\\scripts\\keyword.pex",
-			"skse_1_07_03\\Data\\scripts\\leveledactor.pex",
-			"skse_1_07_03\\Data\\scripts\\leveleditem.pex",
-			"skse_1_07_03\\Data\\scripts\\leveledspell.pex",
-			"skse_1_07_03\\Data\\scripts\\magiceffect.pex",
-			"skse_1_07_03\\Data\\scripts\\math.pex",
-			"skse_1_07_03\\Data\\scripts\\modevent.pex",
-			"skse_1_07_03\\Data\\scripts\\netimmerse.pex",
-			"skse_1_07_03\\Data\\scripts\\objectreference.pex",
-			"skse_1_07_03\\Data\\scripts\\outfit.pex",
-			"skse_1_07_03\\Data\\scripts\\perk.pex",
-			"skse_1_07_03\\Data\\scripts\\potion.pex",
-			"skse_1_07_03\\Data\\scripts\\quest.pex",
-			"skse_1_07_03\\Data\\scripts\\race.pex",
-			"skse_1_07_03\\Data\\scripts\\scroll.pex",
-			"skse_1_07_03\\Data\\scripts\\shout.pex",
-			"skse_1_07_03\\Data\\scripts\\skse.pex",
-			"skse_1_07_03\\Data\\scripts\\soulgem.pex",
-			"skse_1_07_03\\Data\\scripts\\sound.pex",
-			"skse_1_07_03\\Data\\scripts\\sounddescriptor.pex",
-			"skse_1_07_03\\Data\\scripts\\spawnertask.pex",
-			"skse_1_07_03\\Data\\scripts\\spell.pex",
-			"skse_1_07_03\\Data\\scripts\\stringutil.pex",
-			"skse_1_07_03\\Data\\scripts\\textureset.pex",
-			"skse_1_07_03\\Data\\scripts\\treeobject.pex",
-			"skse_1_07_03\\Data\\scripts\\ui.pex",
-			"skse_1_07_03\\Data\\scripts\\uicallback.pex",
-			"skse_1_07_03\\Data\\scripts\\utility.pex",
-			"skse_1_07_03\\Data\\scripts\\weapon.pex",
-			"skse_1_07_03\\Data\\scripts\\weather.pex",
-			"skse_1_07_03\\Data\\scripts\\wornobject.pex",
-			"skse_1_07_03\\skse_loader.exe",
-			"skse_1_07_03\\skse_1_9_32.dll",
-			"skse_1_07_03\\skse_steam_loader.dll"
-		],
-		"install_path": "%SkyrimPath%"
-	}, {
-		"name": "ENB",
-		"version": "0.305",
-		"download": "http://enbdev.com/enbseries_skyrim_v0305.zip",
-		"install_path": "%SkyrimPath%"
-	}, {
-		"name": "TES5Edit",
-		"version": "3.1.2",
-		"download": "https://github.com/TES5Edit/TES5Edit/releases/download/xedit-3.1.2/TES5Edit_3_1_2.7z",
-		"install_path": "%SkyrimPath%\\Mods\\TES5Edit"
-	}, {
-		"name": "Mator Smash",
-		"version": "0.2.2.2",
-		"download": "https://github.com/matortheeternal/smash/releases/download/v0.2.2/MatorSmash.zip",
-		"install_path": "%SkyrimPath%\\Mods\\MatorSmash"
-	}, {
-		"name": "Wrye Bash",
-		"version": "0.306",
-		"download": "https://github.com/wrye-bash/wrye-bash/releases/download/v306/Wrye.Bash.306.-.Standalone.Executable.7z",
-		"install_path": "%SkyrimPath%\\Mods\\WryeBash"
-	}],
-	"ModOrganizer.ini": {
-		"[Plugins]": [
-			"BSA%20Extractor\\enabled=true",
-			"Basic%20diagnosis%20plugin\\check_modorder=false"
-		],
-		"[customExecutables]": [{
-			"title": "SKSE",
-			"custom": "false",
-			"toolbar": "false",
-			"ownicon": "false"
-		}, {
-			"title": "Skyrim",
-			"custom": "false",
-			"toolbar": "false",
-			"ownicon": "false"
-		}, {
-			"title": "Skyrim Launcher",
-			"custom": "false",
-			"toolbar": "false",
-			"ownicon": "false"
-		}, {
-			"title": "TES5Edit",
-			"custom": "true",
-			"toolbar": "true",
-			"ownicon": "true",
-			"binary": "%SkyrimPath%\\Mods\\TES5Edit\\TES5Edit.exe",
-			"arguments": "",
-			"workingDirectory": "",
-			"closeOnStart": "false",
-			"steamAppID": ""
-		}, {
-			"title": "Smash",
-			"custom": "true",
-			"toolbar": "true",
-			"ownicon": "true",
-			"binary": "%SkyrimPath%\\Mods\\MatorSmash\\MatorSmash.exe",
-			"arguments": "",
-			"workingDirectory": "",
-			"closeOnStart": "false",
-			"steamAppID": ""
-		}, {
-			"title": "WryeBash",
-			"custom": "true",
-			"toolbar": "true",
-			"ownicon": "true",
-			"binary": "%SkyrimPath%\\Mods\\WryeBash\\Wrye Bash.exe",
-			"arguments": "",
-			"workingDirectory": "",
-			"closeOnStart": "false",
-			"steamAppID": ""
-		}]
-	}
+  "utilities" : [
+    {
+      "_comment_" : ["https://sourceforge.net/projects/modorganizer/",
+                     "https://github.com/TanninOne/modorganizer/releases"],
+      "name": "Mod Organizer",
+      "version": "1.3.10",
+      "download": "http://iweb.dl.sourceforge.net/project/modorganizer/ModOrganizer_v1.3.10.7z",
+      "install_path": "%SkyrimPath%\\Mods\\ModOrganizer"
+    },
+    {
+      "_comment_" : "http://skse.silverlock.org/",
+      "name": "SKSE",
+      "version": "1.7.3",
+      "download": "http://skse.silverlock.org/beta/skse_1_07_03.7z",
+      "SKSE_wanted_files": [
+        "skse_1_07_03\\skse_readme.txt",
+        "skse_1_07_03\\skse_whatsnew.txt",
+        "skse_1_07_03\\Data\\scripts\\activemagiceffect.pex",
+        "skse_1_07_03\\Data\\scripts\\actor.pex",
+        "skse_1_07_03\\Data\\scripts\\actorbase.pex",
+        "skse_1_07_03\\Data\\scripts\\actorvalueinfo.pex",
+        "skse_1_07_03\\Data\\scripts\\alias.pex",
+        "skse_1_07_03\\Data\\scripts\\ammo.pex",
+        "skse_1_07_03\\Data\\scripts\\apparatus.pex",
+        "skse_1_07_03\\Data\\scripts\\armor.pex",
+        "skse_1_07_03\\Data\\scripts\\armoraddon.pex",
+        "skse_1_07_03\\Data\\scripts\\art.pex",
+        "skse_1_07_03\\Data\\scripts\\book.pex",
+        "skse_1_07_03\\Data\\scripts\\cell.pex",
+        "skse_1_07_03\\Data\\scripts\\colorcomponent.pex",
+        "skse_1_07_03\\Data\\scripts\\colorform.pex",
+        "skse_1_07_03\\Data\\scripts\\combatstyle.pex",
+        "skse_1_07_03\\Data\\scripts\\constructibleobject.pex",
+        "skse_1_07_03\\Data\\scripts\\defaultobjectmanager.pex",
+        "skse_1_07_03\\Data\\scripts\\enchantment.pex",
+        "skse_1_07_03\\Data\\scripts\\equipslot.pex",
+        "skse_1_07_03\\Data\\scripts\\faction.pex",
+        "skse_1_07_03\\Data\\scripts\\flora.pex",
+        "skse_1_07_03\\Data\\scripts\\form.pex",
+        "skse_1_07_03\\Data\\scripts\\formlist.pex",
+        "skse_1_07_03\\Data\\scripts\\formtype.pex",
+        "skse_1_07_03\\Data\\scripts\\game.pex",
+        "skse_1_07_03\\Data\\scripts\\gamedata.pex",
+        "skse_1_07_03\\Data\\scripts\\headpart.pex",
+        "skse_1_07_03\\Data\\scripts\\ingredient.pex",
+        "skse_1_07_03\\Data\\scripts\\input.pex",
+        "skse_1_07_03\\Data\\scripts\\keyword.pex",
+        "skse_1_07_03\\Data\\scripts\\leveledactor.pex",
+        "skse_1_07_03\\Data\\scripts\\leveleditem.pex",
+        "skse_1_07_03\\Data\\scripts\\leveledspell.pex",
+        "skse_1_07_03\\Data\\scripts\\magiceffect.pex",
+        "skse_1_07_03\\Data\\scripts\\math.pex",
+        "skse_1_07_03\\Data\\scripts\\modevent.pex",
+        "skse_1_07_03\\Data\\scripts\\netimmerse.pex",
+        "skse_1_07_03\\Data\\scripts\\objectreference.pex",
+        "skse_1_07_03\\Data\\scripts\\outfit.pex",
+        "skse_1_07_03\\Data\\scripts\\perk.pex",
+        "skse_1_07_03\\Data\\scripts\\potion.pex",
+        "skse_1_07_03\\Data\\scripts\\quest.pex",
+        "skse_1_07_03\\Data\\scripts\\race.pex",
+        "skse_1_07_03\\Data\\scripts\\scroll.pex",
+        "skse_1_07_03\\Data\\scripts\\shout.pex",
+        "skse_1_07_03\\Data\\scripts\\skse.pex",
+        "skse_1_07_03\\Data\\scripts\\soulgem.pex",
+        "skse_1_07_03\\Data\\scripts\\sound.pex",
+        "skse_1_07_03\\Data\\scripts\\sounddescriptor.pex",
+        "skse_1_07_03\\Data\\scripts\\spawnertask.pex",
+        "skse_1_07_03\\Data\\scripts\\spell.pex",
+        "skse_1_07_03\\Data\\scripts\\stringutil.pex",
+        "skse_1_07_03\\Data\\scripts\\textureset.pex",
+        "skse_1_07_03\\Data\\scripts\\treeobject.pex",
+        "skse_1_07_03\\Data\\scripts\\ui.pex",
+        "skse_1_07_03\\Data\\scripts\\uicallback.pex",
+        "skse_1_07_03\\Data\\scripts\\utility.pex",
+        "skse_1_07_03\\Data\\scripts\\weapon.pex",
+        "skse_1_07_03\\Data\\scripts\\weather.pex",
+        "skse_1_07_03\\Data\\scripts\\wornobject.pex",
+        "skse_1_07_03\\skse_loader.exe",
+        "skse_1_07_03\\skse_1_9_32.dll",
+        "skse_1_07_03\\skse_steam_loader.dll"
+      ],
+      "install_path": "%SkyrimPath%"
+    },
+    {
+      "_comment_" : "http://enbdev.com/download_mod_tesskyrim.html",
+      "name": "ENB",
+      "version": "0.308",
+      "download": "http://enbdev.com/enbseries_skyrim_v0308.zip",
+      "install_path": "%SkyrimPath%"
+    },
+    {
+      "_comment_" : "https://github.com/TES5Edit/TES5Edit/releases",
+      "name": "TES5Edit",
+      "version": "3.1.2",
+      "download": "https://github.com/TES5Edit/TES5Edit/releases/download/xedit-3.1.2/TES5Edit_3_1_2.7z",
+      "install_path": "%SkyrimPath%\\Mods\\TES5Edit"
+    },
+    {
+      "_comment_" : "https://github.com/matortheeternal/smash/releases",
+  		"name": "Mator Smash",
+  		"version": "0.3.1",
+  		"download": "https://github.com/matortheeternal/smash/releases/download/0.3.1/MatorSmash.zip",
+  		"install_path": "%SkyrimPath%\\Mods\\MatorSmash"
+  	},
+    {
+      "_comment_" : "https://github.com/wrye-bash/wrye-bash/releases",
+      "name": "Wrye Bash",
+      "version": "0.306",
+      "download": "https://github.com/wrye-bash/wrye-bash/releases/download/v306/Wrye.Bash.306.-.Standalone.Executable.7z",
+      "install_path": "%SkyrimPath%\\Mods\\WryeBash"
+    }
+  ],
+  "ModOrganizer.ini": {
+    "[Plugins]": [
+      "BSA%20Extractor\\enabled=true",
+      "Basic%20diagnosis%20plugin\\check_modorder=false"
+    ],
+    "[customExecutables]": [
+      {
+        "title": "SKSE",
+        "custom": "false",
+        "toolbar": "false",
+        "ownicon": "false"
+      },
+      {
+        "title": "Skyrim",
+        "custom": "false",
+        "toolbar": "false",
+        "ownicon": "false"
+      },
+      {
+        "title": "Skyrim Launcher",
+        "custom": "false",
+        "toolbar": "false",
+        "ownicon": "false"
+      },
+      {
+        "title": "TES5Edit",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%SkyrimPath%\\Mods\\TES5Edit\\TES5Edit.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "Smash",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%SkyrimPath%\\Mods\\MatorSmash\\MatorSmash.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "WryeBash",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%SkyrimPath%\\Mods\\WryeBash\\Wrye Bash.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+    }
+  ]
+  }
 }
