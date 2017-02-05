@@ -2,6 +2,7 @@
 #V0.1, basic functionality, download
 #V0.2, just definitions here, the control is moved to main.py
 #V0.3, no config is here, main sends everything
+#V0.4, replaced by proper urllib.request, handling all the cases, no need for this anymore
 #NOT PYTHONIC, wget handles urls with bad ssl certificates and the referalls
 #TODO this should all be replaced with regular download thing in m0
 

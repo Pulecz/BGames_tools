@@ -36,6 +36,24 @@ def try_load_json(json_file):
 		print('FAIL: JSON Decode Error:\n  {0}'.format(e))
 		return False
 
+
+def confirm_skyrim_dirs():
+	def confirm_dir(msg, default):
+		#TODO google how the "or\" works (I forgot...)
+		dir = input(msg + ' \n\nIs it ' + default + ' ?\nHit enter to confirm') or\
+		default
+		return dir
+	try:
+		skyrim_dir = get_skyrim_dir() #can cause exit 99
+	except OSError as e:
+		print(e)
+
+	#confirm skyrim_dir
+	skyrim_dir = confirm_dir('Enter the full path to Skyrim:',
+	skyrim_dir)
+	return (skyrim_dir)
+
+
 #how to unpack mod pack
 def print_guidance():
 	print("Using TES5 Edit cleanup Master files, here is how: http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Clean_The_Bethesda_ESMs")
@@ -46,8 +64,7 @@ def print_guidance():
 
 #--------------------------------import modules--------------------------------
 import m0prerequisites
-import m1download_utils
-import m2utils_install
+import m1utils_install
 
 if __name__ == "__main__":
 	#-------------------------------0. Prerequisites-------------------------------
@@ -89,7 +106,7 @@ if __name__ == "__main__":
 			Mash_install_fullpath,
 			MO_install_fullpath,
 			SKSE_install_fullpath,
-			TES5E_install_fullpath = m2utils_install.get_utilities_paths(download_cache_folder, filenames_list_in_order)
+			TES5E_install_fullpath = m1utils_install.get_utilities_paths(download_cache_folder, filenames_list_in_order)
 			#load SKSE_wanted_files, install paths and MO_config
 			for utility in input_json['utilities']:
 				if utility['name'] == 'Mod Organizer':
@@ -115,13 +132,13 @@ if __name__ == "__main__":
 	#------------------------------1. Install base------------------------------
 		def install_utilities():
 			#TODO install sumarry, what was installed sucessfuly and what not
-			m2utils_install.MO_install(sevenzip_path, MO_install_fullpath, MO_destination)
-			m2utils_install.SKSE_install(sevenzip_path, SKSE_install_fullpath, SKSE_wanted_files, SKSE_destination)
-			m2utils_install.ENB_install(sevenzip_path, ENB_install_fullpath, ENB_destination)
-			m2utils_install.TES5E_install(sevenzip_path, TES5E_install_fullpath, TES5E_destination)
-			m2utils_install.Mash_install(sevenzip_path, Mash_install_fullpath, Smash_destination)
-			m2utils_install.write_MO_ini(MO_destination, MO_config, skyrim_dir)
-			##m2utils_install.validate() #validate all
+			m1utils_install.MO_install(sevenzip_path, MO_install_fullpath, MO_destination)
+			m1utils_install.SKSE_install(sevenzip_path, SKSE_install_fullpath, SKSE_wanted_files, SKSE_destination)
+			m1utils_install.ENB_install(sevenzip_path, ENB_install_fullpath, ENB_destination)
+			m1utils_install.TES5E_install(sevenzip_path, TES5E_install_fullpath, TES5E_destination)
+			m1utils_install.Mash_install(sevenzip_path, Mash_install_fullpath, Smash_destination)
+			m1utils_install.write_MO_ini(MO_destination, MO_config, skyrim_dir)
+			##m1utils_install.validate() #validate all
 			#all done, delete the bins
 			m0prerequisites.cleanup('bin') #DANGEROUS
 
@@ -130,9 +147,9 @@ if __name__ == "__main__":
 
 # -----------------------------------3.test------------------------------------
 #to unpack backup
-##m2utils_install.use_sevenzip(sevenzip_path, 'x','e:\\project\\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z',MO_destination')
+##m1utils_install.use_sevenzip(sevenzip_path, 'x','e:\\project\\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z',MO_destination')
 #to do a backup
-##m2utils_install.use_sevenzip(sevenzip_path, 'a -t7z','d:\\games_stuff\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z','d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\profiles d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\overwrite d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\mods')
+##m1utils_install.use_sevenzip(sevenzip_path, 'a -t7z','d:\\games_stuff\TES5_Skyrim\\0100-Patches.ready.group\\0100-Patches_test_pack.7z','d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\profiles d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\overwrite d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\mods')
 
 """known issues
 	* bin//wget is in use and m0prerequisites tries to overwrite that, TODO fix

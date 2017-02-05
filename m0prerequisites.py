@@ -1,17 +1,26 @@
-#m0prerequisities V0.4
+#m0prerequisities V0.5
 #V0.1, basic idea, download and unpack
 #V0.2, rewriten to functions, get_sevenzip_dir and cleanup added
 #V0.3, just definitions here, the control is moved to main.py
 #V0.4, no config is here, main sends everything, unpack_to_bin does not overwrite, no need for re
-#TODO probably push all the Skyrim and software checkers for utilities to here
+#V0.5 big rewrite
 
 
-import os, urllib.request, re #for checking files and downloading #TODO remove re
 from winreg import HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx #for get_skyrim_dir
-import zipfile #for unpack_to_bin
-import subprocess # for get_sevenzip_dir
-import shutil # for cleanup
-import sys # only one use, get_skyrim_dir can return something and main can exit
+import urllib.request, os, sys #for download
+
+
+def get_skyrim_dir():
+	#reg_path might be different on 32bit systems
+	reg_path = r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim"
+	reg_value = "installed path"
+	try:
+		PyHKEY = OpenKey(HKEY_LOCAL_MACHINE, reg_path, 0, KEY_READ)
+		skyrim_dir = QueryValueEx(PyHKEY, reg_value)[0]
+	except FileNotFoundError:
+		print('No key or no value "{0}" in:HKLM\{1}'.format(reg_value, reg_path))
+		raise ValueError #leads to exit 99 in main.py
+	return skyrim_dir
 
 
 def download(url, dest):
@@ -71,37 +80,6 @@ def download(url, dest):
     	#404
     	print(e)
 
-def get_skyrim_dir():
-	#reg_path might be different on 32bit systems
-	reg_path = r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim"
-	reg_value = "installed path"
-	try:
-		PyHKEY = OpenKey(HKEY_LOCAL_MACHINE, reg_path, 0, KEY_READ)
-		skyrim_dir = QueryValueEx(PyHKEY, reg_value)[0]
-	except FileNotFoundError:
-		print('No key or no value "{0}" in:HKLM\{1}'.format(reg_value, reg_path))
-		raise ValueError #leads to exit 99 in main.py
-	return skyrim_dir
-
-
-def confirm_skyrim_dirs():
-	def confirm_dir(msg, default):
-		#TODO google how the "or\" works (I forgot...)
-		dir = input(msg + ' \n\nIs it ' + default + ' ?\nHit enter to confirm') or\
-		default
-		return dir
-	try:
-		skyrim_dir = get_skyrim_dir() #can cause exit 99
-	except OSError as e:
-		print(e)
-
-	#confirm skyrim_dir
-	skyrim_dir = confirm_dir('Enter the full path to Skyrim:',
-	skyrim_dir)
-	return (skyrim_dir)
-
-
-
 
 def old():
 	def get_sevenzip_dir():
@@ -132,6 +110,7 @@ def old():
 
 
 	def unpack_to_bin(file): #expects specific file name and specific archive
+        import zipfile #for unpack_to_bin
 		#FUCK THIS, let's use pip/pyunpack
 		#TODO instead of os.path.exists, do a CRC check
 		if '7za920' in file:
@@ -147,4 +126,5 @@ def old():
 		#TODO if no file is supported, return false or something
 
 	def cleanup(folder): # probably usable in different module
+        import shutil # for cleanup
 		shutil.rmtree(os.path.join(os.getcwd(),folder))
