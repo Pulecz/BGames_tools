@@ -3,8 +3,7 @@
 #V0.2, rewriten to functions, get_sevenzip_dir and cleanup added
 #V0.3, just definitions here, the control is moved to main.py
 #V0.4, no config is here, main sends everything, unpack_to_bin does not overwrite, no need for re
-#V0.5 big rewrite
-
+#V0.5 big rewrite, get_skyrim_dir and download should handle all Prerequisites
 
 from winreg import HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx #for get_skyrim_dir
 import urllib.request, os, sys #for download
@@ -25,11 +24,10 @@ def get_skyrim_dir():
 
 def download(url, dest):
     def download_with_referer(url, filename, referer):
-        #set it up
+        #set the header
         req = urllib.request.Request(url)
         req.add_header('Referer', referer)
         urlfile = urllib.request.urlopen(req)
-
         #write the file
         progress = 0
         f = open(filename, "wb")
@@ -41,8 +39,6 @@ def download(url, dest):
             f.write(data)
             progress += len(data)
             sys.stdout.write("\rGot {0} bytes".format(progress))
-
-
 
     def reporthook(blocknum, blocksize, totalsize):
         #progress bar from
@@ -57,6 +53,7 @@ def download(url, dest):
     			sys.stdout.write("\n")
     	else: # total size is unknown
     		sys.stdout.write("read %d\n" % (readsofar,))
+
     #filename is url from last position of '/', the + 1 is exclude it
     filename = url[url.rfind('/') + 1:]
     target = dest + '/' + filename
@@ -69,62 +66,13 @@ def download(url, dest):
 
     print("Downloading file {0}".format(filename))
     if 'enbdev.com/' in url:
-    	#TODO try to check all was fine?
-    	referer = 'http://enbdev.com/download_mod_tesskyrim.html'
-    	download_with_referer(url, target, referer)
-    	return target
+        #TODO try to check all was fine?
+        referer = 'http://enbdev.com/download_mod_tesskyrim.html'
+        download_with_referer(url, target, referer)
+        return target
     try:
-    	path, header = urllib.request.urlretrieve(url, target, reporthook)
-    	return path
+        path, header = urllib.request.urlretrieve(url, target, reporthook)
+        return path #should be same as target
     except urllib.error.HTTPError as e:
-    	#404
-    	print(e)
-
-
-def old():
-	def get_sevenzip_dir():
-		#FUCK THIS, let's use pip/pyunpack
-		def do_reg_query(reg_path, reg_value):
-			PyHKEY = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path, 0, winreg.KEY_READ)
-			sevenzip_dir = winreg.QueryValueEx(PyHKEY, reg_value)[0]
-			return sevenzip_dir
-
-
-		reg_path = r'SOFTWARE\7-Zip'
-		reg_value = "Path"
-		reg_value_64 = "Path64"
-
-		try:
-			sevenzip_dir = do_reg_query(reg_path, reg_value)
-		except FileNotFoundError:
-
-			try:
-				sevenzip_dir = do_reg_query(reg_path, reg_value_64)
-			except FileNotFoundError:
-				print('No key or no value "{0}" in:HKLM\{1}'.format(reg_value_64, reg_path))
-				raise ValueError
-
-			print('No key or no value "{0}" in:HKLM\{1}'.format(reg_value, reg_path))
-			raise ValueError
-		return sevenzip_dir
-
-
-	def unpack_to_bin(file): #expects specific file name and specific archive
-        import zipfile #for unpack_to_bin
-		#FUCK THIS, let's use pip/pyunpack
-		#TODO instead of os.path.exists, do a CRC check
-		if '7za920' in file:
-			if not os.path.exists('bin\\7za.exe'):
-				with zipfile.ZipFile(file, 'r') as archive:
-					archive.extract('7za.exe',os.getcwd() + '\\bin')
-			return os.getcwd() + '\\bin\\7za.exe'
-		if 'wget' in file:
-			if not os.path.exists('bin\\wget.exe'):
-				with zipfile.ZipFile(file, 'r') as archive:
-					archive.extract('wget.exe',os.getcwd() + '\\bin')
-			return os.getcwd() + '\\bin\\wget.exe'
-		#TODO if no file is supported, return false or something
-
-	def cleanup(folder): # probably usable in different module
-        import shutil # for cleanup
-		shutil.rmtree(os.path.join(os.getcwd(),folder))
+        print(e)
+        return False

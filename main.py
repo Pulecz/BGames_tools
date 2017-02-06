@@ -1,15 +1,13 @@
-#main V0.3
+#main V0.4
 #V0.1, basic calling defs from modules
 #V0.2, some imports and functions here, load json and etc
 #V0.3, lot of polishing
-#TODO, m0prerequisites needs better handling
-#TODO write plugins.txt, loadorder.txt, skyrim.ini to MO profile, NMM?
-#BIG TODO from json, push mod ids to downloader
+#V0.4, less functions, less modules, no subprocess
 
 #for def load_json:
 from os.path import exists
-from json import load as jsonload
-import os, json #for checking and loading json file
+from json import load, JSONDecodeError
+import hashlib #for verifying
 import sys # for exits
 
 #------------------------------------config------------------------------------
@@ -18,7 +16,7 @@ base_install = True
 print_guidance_switch = False
 #this is just temporary, this will not be needed TODO
 base_utilities_temp_folder = 'tmp'
-download_cache_folder = 'utilities'
+utilities_download_dir = 'utilities'
 
 #-------------------------------------defs-------------------------------------
 
@@ -27,16 +25,74 @@ download_cache_folder = 'utilities'
 def try_load_json(json_file):
 	try:
 		with open(json_file, 'r') as input_file:
-			jsondata = jsonload(input_file)
+			jsondata = load(input_file)
 		return jsondata
 	except FileNotFoundError:
 		print('FAIL: File {0} does not exist in this folder'.format(json_file))
 		return False
-	except json.decoder.JSONDecodeError as e:
+	except JSONDecodeError as e:
 		print('FAIL: JSON Decode Error:\n  {0}'.format(e))
 		return False
 
 
+def verify(target_dir):
+	result = {}
+	for utility in input_json['utilities']:
+		url = utility['download']
+		path = target_dir + '/' + url[url.rfind('/') + 1:]
+		crc_config = utility['sha1']
+		try:
+			if crc_config == hashlib.sha1(open(path,'rb').read()).hexdigest():
+				result[utility['name']] = {
+				"path" : path,
+				"verified" : True,
+				"install_path" : utility['install_path']
+				.replace('%SkyrimPath%', skyrim_dir)
+ 				}
+			else:
+				result[utility['name']] = {
+				"verified" : False,
+ 				}
+		except FileNotFoundError:
+				result[utility['name']] = {
+				"verified" : False,
+				}
+	return result
+
+
+def download_utilities(data, target_dir):
+	result = {}
+	#TODO add checksum hash, so in next run it will skip download
+	for utility in input_json['utilities']:
+		if data[utility['name']]['verified'] is False:
+			print('\nDownloading', utility['name'])
+			path = m0prerequisites.download(utility['download'], target_dir)
+			if path:
+				with open(path, 'rb') as f:
+					hex_crc = hashlib.sha1(f.read()).hexdigest()
+				result[utility['name']] = {
+				"path" : path,
+				"crc_sha1" : hex_crc
+				 }
+
+	#with open(target_dir + '/' + target_dir + '.sha', 'w') as crc_file:
+	#	for utility in result.keys():
+	#		crc_file.write('{0} *{1}\n'
+	#		.format(result[utility]['crc_sha1'],
+	#				result[utility]['path'].replace(target_dir + '/','')))
+	return result
+
+
+def do_both():
+	#TODO handle input_json as working memory for operations
+	#e.g. add source paths, verify,
+	data = {}
+	data.update(verify(utilities_download_dir))
+	print(data)
+	data.update(download_utilities(data, utilities_download_dir))
+	return data
+
+#--------maybe no use
 def confirm_skyrim_dirs():
 	def confirm_dir(msg, default):
 		#TODO google how the "or\" works (I forgot...)
@@ -56,6 +112,7 @@ def confirm_skyrim_dirs():
 
 #how to unpack mod pack
 def print_guidance():
+	#TODO write plugins.txt, loadorder.txt, skyrim.ini to MO profile?
 	print("Using TES5 Edit cleanup Master files, here is how: http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Clean_The_Bethesda_ESMs")
 	print("When you're finished do a Merged Patch, here is how: https://www.youtube.com/watch?v=BtLolEgVMTg")
 	print("When you're finished do a Bashed Patch, here is how: https://www.youtube.com/watch?v=W1Es06MtAZM, http://wiki.step-project.com/Bashed_Patch or https://www.reddit.com/r/skyrimmods/wiki/beginners_guide_quickstart#wiki_create_a_bashed_patch")
@@ -83,33 +140,25 @@ if __name__ == "__main__":
 		print('FAIL: Exit 1')
 		sys.exit(1)
 
-	def download_utilities():
-		#TODO add checksum hash, so in next run it will skip download
-		for utility in input_json['utilities']:
-			print('\nDownloading', utility['name'])
-			path = m0prerequisites.download(utility['download'], download_cache_folder)
-			if path:
-				print('DEBUG:',path)
-		#DOWNLOAD ALL UTILITIES
-		##MO_install_7zarchive, SKSE_install_7zarchive, ENB_install_archive, TES5E_install_7zarchive, Mash_install_archive = m1download_utils.download_all(wget_path, input_json, download_cache_folder)
-		#filenames_list_in_order = m1download_utils.download_all(wget_path, input_json, download_cache_folder)
+	data = do_both()
+	def test(data):
+		#paths for utilities are in dict[utility] key path
+		#load SKSE_wanted_files, install paths and MO_config
+		print("I would unpack")
+		for utility in data.keys():
+			print(data[utility]['path'], 'to', data[utility]['install_path'])
 
-	download_utilities()
+
+
+
+
 
 	#------------fix from here
 	def todo():
-
-
-
 		def load_downloaded_utilities():
-			ENB_install_fullpath,
-			Mash_install_fullpath,
-			MO_install_fullpath,
-			SKSE_install_fullpath,
-			TES5E_install_fullpath = m1utils_install.get_utilities_paths(download_cache_folder, filenames_list_in_order)
-			#load SKSE_wanted_files, install paths and MO_config
 			for utility in input_json['utilities']:
 				if utility['name'] == 'Mod Organizer':
+					MO_config = input_json['ModOrganizer.ini']
 					MO_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
 					#if MO_destination ends with ModOrganizer, we need to remove it, because the archive is packed as a folder ModOrganizer
 					#TODO but if the install_path will not end with ModOrganizer and user will want to extract to C:\SkyrimMods\MO for example
@@ -117,16 +166,8 @@ if __name__ == "__main__":
 					#I just have to know the final destionation of MO so write_MO_ini function will work correctly
 					if MO_destination.endswith('ModOrganizer'):
 						MO_destination = MO_destination[:MO_destination.rfind('ModOrganizer')]
-					if utility['name'] == 'SKSE':
-						SKSE_wanted_files = utility['SKSE_wanted_files']
-						SKSE_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
-					if utility['name'] == 'ENB':
-						ENB_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
-					if utility['name'] == 'TES5Edit':
-						TES5E_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
-					if utility['name'] == 'Mator Smash':
-						Smash_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
-					MO_config = input_json['ModOrganizer.ini']
+				if utility['name'] == 'SKSE':
+					SKSE_wanted_files = utility['SKSE_wanted_files']
 
 
 	#------------------------------1. Install base------------------------------
@@ -181,28 +222,3 @@ if __name__ == "__main__":
 	2 no 7z binary in ProgramFiles
 	99 Skyrim was not yet launched
 """
-
-#dump
-def get_base_utils(): #depreceated
-	#------------fix from here
-	#loads 7zip and wget urls from json
-	for base_utility in input_json['base_utilities']:
-		if base_utility['name'] == '7zip':
-			w7zip_urls = base_utility['download']
-		if base_utility['name'] == 'wget':
-			wget_urls = base_utility['download']
-
-	#downloads wget and unpack to '//bin' folder
-	wget_path = m0prerequisites.unpack_to_bin(m0prerequisites.download(wget_urls,base_utilities_temp_folder))
-	#if get_sevenzip_dir function finds 7z installed, it will use it
-	#TODO meh, it runs get_sevenzip_dir twice, fix it and make it a whole function
-	if isinstance(m0prerequisites.get_sevenzip_dir(), str):
-		sevenzip_path = m0prerequisites.get_sevenzip_dir()
-		if sevenzip_path.endswith('\\'): #TODO meh mess! search in that directory for proper file and test it, if fail then just do the download
-			sevenzip_path += '7z.exe'
-	else: # otherwise downloads wget and unpack to '//bin' folder
-		sevenzip_path = m0prerequisites.unpack_to_bin(m0prerequisites.download(w7zip_urls,base_utilities_temp_folder))
-
-	print('Base utility for downloading: ' + wget_path) #give it to next module
-	print('Base utility for unpacking: '  + sevenzip_path) #give it to next module
-	m0prerequisites.cleanup(base_utilities_temp_folder) #remove wget and 7zip downloads, DANGEROUS
