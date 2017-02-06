@@ -1,5 +1,4 @@
-#m2utils_install V0.5
-#NOT PYTHONIC, 7zip calls can be replaced by lzma https://docs.python.org/3/library/lzma.html
+#m1utils_install V0.6
 
 """ change-log
 	V01 - general improvements
@@ -7,10 +6,11 @@
 	V03 - get_sevenzip_bin and write_MO_ini function and some more stuff
 	V04 - deleted LOOT and Wrye support, first changes to work with m0prerequisites
 	V05 - get_sevenzip_bin replaced by logic in main which is TODO function, no config is here, main sends everything, make_mods_folder_in_base deleted, no longer needed
+	V06 - most of it threw out, as there no use of 7z
 """
 
 """ todos
-	todo0 #m2utils_install.validate()
+	todo0 #m1utils_install.validate()
 		- function for validating the installed procedure
 	todo1 ENB_install, do not install enblocal.ini but pick recommended one
 		- use DxDiag to determine ram,vram,gpu, etc
@@ -20,76 +20,13 @@
 	and just about everything which is marked as #TODO
 """
 
-import os, subprocess, zipfile #for checking files, calling 7z and unpacking ENB
-
-#-----------------------------Install ModOrganizer-----------------------------
-def get_utilities_paths(utilities_location, filenames): #TODO md5sum check
-	for file in filenames:
-		#TODO this wants specific order, fix that
-		#hotfix
-		if 'enbseries' in file:
-			ENB_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-			##ENB_install_fullpath = os.path.join(os.getcwd(),utilities_location, ENB_install_archive)
-		if 'Mator' in file:
-			##Mash_install_fullpath = os.path.join(os.getcwd(),utilities_location, Mash_install_archive)
-			Mash_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-		if 'ModOrganizer' in file:
-			##MO_install_fullpath = os.path.join(os.getcwd(),utilities_location, MO_install_7zarchive)
-			MO_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-		##if 'NMM' in file: #to be implented
-			#NMM_install_fullpath = os.path.join(os.getcwd(),utilities_location, NMM_install_7zarchive)
-		if 'skse' in file:
-			##SKSE_install_fullpath = os.path.join(os.getcwd(),utilities_location, SKSE_install_7zarchive)
-			SKSE_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-		if 'TES5' in file:
-			##TES5E_install_fullpath = os.path.join(os.getcwd(),utilities_location, TES5E_install_7zarchive)
-			TES5E_install_fullpath = os.path.join(os.getcwd(),utilities_location, file)
-	return ENB_install_fullpath, Mash_install_fullpath, MO_install_fullpath, SKSE_install_fullpath, TES5E_install_fullpath
-
-
-#this is totally crazy and I do this just for fun and its still WIP
-def MO_fix_archive(sevenzip_bin, MO_install_fullpath):
-	#remove the folder from the archive by renaming each file
-	filelist = []
-	#get the filelist
-	sevenzip_command_list = sevenzip_bin + ' l "' + MO_install_fullpath + '"'
-	#I don't like check_output, Popen might be better
-	MO_7z_list = str(subprocess.check_output(sevenzip_command_list))
-	#fix the output
-	for line in MO_7z_list.split('\\r\\n'):
-		if 'ModOrganizer\\' in line:
-			filelist.append(line[line.find('ModOrganizer\\'):])
-	#now lets prepare the string for 7z
-	huge_list = ''
-	for file in filelist:
-		hugelist =+ file + ' '
-		hugelist =+ file.replace('ModOrganizer\\','') + ' '
-	#remove \ for rename
-	import re
-	re.sub(r'\s\\', ' ', huge_list)
-	#now lets remove '\\' for 7zip
-	hugelist = huge_list.replace('\\\\','\\')
-	#TODO need to remove the directories names, its first 30 items or so
-	sevenzip_command_fix = sevenzip_bin + ' rn "' + MO_install_fullpath + '" ' + huge_list
-	with open('aha.bat', 'w') as b: #bat screws things up, run is at subprocess anyway
-		b.write(sevenzip_command_fix)
-	#MO_7z_subprocess = subprocess.Popen(sevenzip_command_fix, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	#MO_7z_subprocess.communicate()
-
-
-#this function can also extract the insttaler, but its better to use the archive
-def MO_install(sevenzip_bin, MO_install_fullpath, destination):
-	#TODO same as mash and TES5 edit, merge it
-	print("Installing ModOrganizer")
-	#-y option will always overwrite
-	sevenzip_command = sevenzip_bin + ' x "' + MO_install_fullpath + '" -o"' + destination + '" -y' #unpack ModOrganizer directory to destination
-	MO_7z_subprocess = subprocess.Popen(sevenzip_command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	MO_7z_subprocess.communicate()
-
+import shutil
+import pyunpack
+import tempfile
 
 def write_MO_ini(MO_destination, MO_config, skyrim_dir):
 	print("Writing ModOrganizer.ini")
-	with open(os.path.join(MO_destination + '\\ModOrganizer\\ModOrganizer.ini'),'w') as MO_ini: #TODO dynamic path, but this should work
+	with open(MO_destination + r'\\ModOrganizer.ini','w') as MO_ini:
 		#[Plugins]
 		MO_ini.write('[Plugins]\n')
 		for string in MO_config['[Plugins]']:
@@ -110,68 +47,85 @@ def write_MO_ini(MO_destination, MO_config, skyrim_dir):
 				MO_ini.write(str(key + 1) + '\\closeOnStart=' + string['closeOnStart'].replace('\\','/') + '\n')
 				MO_ini.write(str(key + 1) + '\\steamAppID=' + string['steamAppID'].replace('\\','/') + '\n')
 		MO_ini.write('size=' + str(len(MO_config['[customExecutables]'])) + '\n')
-#---------------------------------Install SKSE---------------------------------
-def SKSE_install(sevenzip_bin, SKSE_install_fullpath, SKSE_wanted_files, skyrim_dir):
-	print("Installing SKSE")
-	#-y option will always overwrite
-	#initialize the list of files we want to extract
-	source_root = ""
-	source_data = ""
-	for file in SKSE_wanted_files:
-		if 'skse_1_07_03\\Data\\scripts' in file:
-			source_data += file + ' '
-		if not 'skse_1_07_03\\Data' in file:
-			source_root += file + ' '
-	#everything from root to root Skyrim Folder
-	sevenzip_command_root = sevenzip_bin + ' e "' + SKSE_install_fullpath + '" -o"' + skyrim_dir + '\\" -y ' + source_root
-	#everything in data\\scripts to Skyrim\data folder (7z will create the scripts folder)
-	sevenzip_command_data = sevenzip_bin + ' e "' + SKSE_install_fullpath + '" -o"' + skyrim_dir + '\\Data\\scripts" -y ' + source_data
-	SKSE_7z_subprocess_root = subprocess.Popen(sevenzip_command_root, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	SKSE_7z_subprocess_root.communicate()
-	SKSE_7z_subprocess_data = subprocess.Popen(sevenzip_command_data, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	SKSE_7z_subprocess_data.communicate()
-#---------------------------------Install ENB----------------------------------
-def ENB_install(sevenzip_bin, ENB_install_fullpath, skyrim_dir):
-	#initialize the list of files we want to extract
-	source_root = ""
-	#this can be hardcoded
-	enb_wanted_files = ['WrapperVersion/d3d9.dll', 'WrapperVersion/enbhost.exe']
-	for file in enb_wanted_files:
-		source_root += file + ' '
-	print("Installing ENB")
-	sevenzip_command_root = sevenzip_bin + ' e "' + ENB_install_fullpath + '" -o"' + skyrim_dir + '\\" -y ' + source_root
-	ENB_7z_subprocess_root = subprocess.Popen(sevenzip_command_root, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	ENB_7z_subprocess_root.communicate()
-#------------------------------Install TES5 Edit-------------------------------
-def TES5E_install(sevenzip_bin, TES5E_install_fullpath, destination):
-	#TODO same as mash, merge it
-	print("Installing TES5 Edit")
-	#-y option will always overwrite
-	sevenzip_command = sevenzip_bin + ' x "' + TES5E_install_fullpath + '" -o"' + destination + '" -y'
-	TES5E_7z_subprocess = subprocess.Popen(sevenzip_command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	TES5E_7z_subprocess.communicate()
-#---------------------------------Install Mash---------------------------------
-#no need to do this via 7z, Mator packs in zip, so ZipFile library could be used
-def Mash_install(sevenzip_bin, Mash_install_fullpath, destination):
-	#TODO same as tes5, merge it
-	print('Installing Smash')
-	#-y option will always overwrite
-	sevenzip_command = sevenzip_bin + ' x "' + Mash_install_fullpath + '" -o"' + destination + '" -y'
-	Smash_7z_subprocess = subprocess.Popen(sevenzip_command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	Smash_7z_subprocess.communicate()
 
-#-----------------------------might not be needed------------------------------
-def use_sevenzip(sevenzip_bin, action, source, output_dir): #not used in the script, only tested for unpacking backups
-	#action = e or x or l
-	#source = archive name
-	#output_dir = where to extract
-	#paramaters =
-		#-y option will always overwrite
-	##parameters = ' x "' + TES5E_install_fullpath + '" -o' + skyrim_mods_dir + '\\TES5Edit -y'
-	if 'a' in action: #for archive
-		sevenzip_command = sevenzip_bin + ' ' + action + ' "' + source + '" ' + output_dir
-		#output_dir = list of files to compress
-	else:
-		sevenzip_command = sevenzip_bin + ' ' + action + ' "' + source + '" -o"' + output_dir + '"'
-	sevenzip_subprocess = subprocess.Popen(sevenzip_command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-	sevenzip_subprocess.communicate()
+
+def install_utilities(data):
+	#TODO few stuff needs to be loaded from input_json, clean
+	#TODO move to m1
+	#create tempdir
+	tmp_dir = tempfile.TemporaryDirectory(suffix='bgames_tools')
+	for utility in data.keys():
+		print('doing',utility)
+		if utility == 'Mod Organizer':
+			#TODO for MO handle MO_config
+			archive = pyunpack.Archive(data[utility]['path'])
+			archive.extractall(tmp_dir.name, auto_create_dir=False)
+			print('Moving Mod Organizer to',data[utility]['install_path'])
+			try:
+				#TODO check when it installs to ModOrganizer\ModOrganizer
+				shutil.move(tmp_dir.name + r'\ModOrganizer', data[utility]['install_path'])
+			except shutil.Error as mo:
+				print("WARNING: {0}".format(mo))
+		elif utility == 'SKSE':
+			#own tempdir for skse
+			tmp_dir_skse = tempfile.TemporaryDirectory(suffix='skse')
+			#
+			archive = pyunpack.Archive(data[utility]['path'])
+			archive.extractall(tmp_dir_skse.name, auto_create_dir=False)
+			skse_root_files = ["skse_1_07_03\\skse_1_9_32.dll",
+							   "skse_1_07_03\\skse_docs.txt",
+							   "skse_1_07_03\\skse_loader.exe",
+							   "skse_1_07_03\\skse_papyrus_docs.txt",
+							   "skse_1_07_03\\skse_readme.txt",
+			        		   "skse_1_07_03\\skse_steam_loader.dll",
+			        		   "skse_1_07_03\\skse_whatsnew.txt"]
+			for skse_file in skse_root_files:
+				print("Installing", skse_file, "to Skyrim's root")
+				try:
+					shutil.copy(tmp_dir_skse.name + '\\' + skse_file, data[utility]['install_path'])
+				except PermissionError as pe_skse_copy:
+					print("FAIL: Couldn't copy file: {0}| File already exists?"
+					.format(pe_skse_copy.filename))
+			print('Moving SKSE scripts to',data[utility]['install_path'] + r'\\Data\\scripts')
+			try:
+				#TODO fix bug, if Skyrim\Data\scripts\ exists, it makes another scripts folder
+				shutil.move(tmp_dir_skse.name + r'\skse_1_07_03\Data\scripts',
+							data[utility]['install_path'] + r'\\Data\\scripts')
+			except shutil.Error as skse_script:
+				print("WARNING: {0}".format(skse_script))
+			#done
+			try:
+				tmp_dir_skse.cleanup()
+			except PermissionError as pe_skse_clean:
+				print("WARNING: Can't remove file: {0}|Please clean it up manually"
+				.format(pe_skse_clean.filename))
+		elif utility == 'ENB':
+			archive = pyunpack.Archive(data[utility]['path'])
+			archive.extractall(tmp_dir.name, auto_create_dir=False)
+			for enb_file in ['WrapperVersion/d3d9.dll', 'WrapperVersion/enbhost.exe']:
+				print("Installing", enb_file, "to Skyrim's root")
+				try:
+					shutil.copy(tmp_dir.name + '\\' + enb_file, data[utility]['install_path'])
+				except PermissionError as pe_enb_copy:
+					print("FAIL: Couldn't copy file: {0}| File already exists?"
+					.format(pe_enb_copy.filename))
+		elif utility == 'Wrye Bash':
+			archive = pyunpack.Archive(data[utility]['path'])
+			archive.extractall(tmp_dir.name, auto_create_dir=False)
+			print('Moving Wrye Bash to',data[utility]['install_path'])
+			try:
+				shutil.move(tmp_dir.name + r'\Mopy', data[utility]['install_path'])
+			except shutil.Error as wryebash:
+				print("WARNING: {0}".format(wryebash))
+		else:
+			print('Moving',utility, 'to', data[utility]['install_path'])
+			archive = pyunpack.Archive(data[utility]['path'])
+			archive.extractall(data[utility]['install_path'],
+							   auto_create_dir=True)
+
+	#all done cleanup
+	try:
+		tmp_dir.cleanup()
+	except PermissionError as pe_clean:
+		print("WARNING: Can't remove file: {0}|Please clean it up manually"
+		.format(pe_clean.filename))
