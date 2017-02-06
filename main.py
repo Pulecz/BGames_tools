@@ -33,11 +33,13 @@ def try_load_json(json_file):
 def install_utilities(data):
 	#TODO move to m1
 	#TODO for safe installing of enb and skse, use SKSE_wanted_files
+        #look into urllib.request.urlretrieve, how they get files to temp
+        #MOVE the specifies files from temp, hopefully windows will take care of that
 	#TODO for MO handle MO_config
 	for utility in data.keys():
 		if utility == 'Mod Organizer':
 			MO_config = input_json['ModOrganizer.ini']
-			#MO_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
+                        """#MO_destination = utility['install_path'].replace('%SkyrimPath%',skyrim_dir)
 			#if MO_destination ends with ModOrganizer, we need to remove it, because the archive is packed as a folder ModOrganizer
 			#TODO but if the install_path will not end with ModOrganizer and user will want to extract to C:\SkyrimMods\MO for example
 			#the result would be C:\SkyrimMods\MO\ModOrganizer, which might not be an issue, but its not "clean"
@@ -45,7 +47,7 @@ def install_utilities(data):
 			#if MO_destination.endswith('ModOrganizer'):
 				#MO_destination = MO_destination[:MO_destination.rfind('ModOrganizer')]
 			#m1utils_install.MO_install(sevenzip_path, MO_install_fullpath, MO_destination)
-			#m1utils_install.write_MO_ini(MO_destination, MO_config, skyrim_dir)
+			#m1utils_install.write_MO_ini(MO_destination, MO_config, skyrim_dir)"""
 			continue
 		if utility == 'SKSE':
 			#SKSE_wanted_files = utility['SKSE_wanted_files']
