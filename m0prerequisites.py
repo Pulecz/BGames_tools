@@ -87,7 +87,7 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 			with open(path, 'rb') as f:
 				hex_crc = hashlib.sha1(f.read()).hexdigest()
 				if crc_config != hex_crc:
-					#downloaded file sha1 has different one the one in config
+					print('FAIL: downloaded file checksum has different one the one in config')
 					#TODO halt?
 					hex_crc_same_as_config_crc = False
 			result[utility['name']] = {

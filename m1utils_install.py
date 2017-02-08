@@ -1,12 +1,13 @@
 #m1utils_install V0.6
 
 """ change-log
-	V01 - general improvements
-	V02 - changed ENB install to 7z, enb and MO install via 7z now, putt local_repo to dict
-	V03 - get_sevenzip_bin and write_MO_ini function and some more stuff
-	V04 - deleted LOOT and Wrye support, first changes to work with m0prerequisites
-	V05 - get_sevenzip_bin replaced by logic in main which is TODO function, no config is here, main sends everything, make_mods_folder_in_base deleted, no longer needed
-	V06 - most of it threw out, as there no use of 7z
+	V01.0 - general improvements
+	V02.0 - changed ENB install to 7z, enb and MO install via 7z now, putt local_repo to dict
+	V03.0 - get_sevenzip_bin and write_MO_ini function and some more stuff
+	V04.0 - deleted LOOT and Wrye support, first changes to work with m0prerequisites
+	V05.0 - get_sevenzip_bin replaced by logic in main which is TODO function, no config is here, main sends everything, make_mods_folder_in_base deleted, no longer needed
+	V06.0 - most of it threw out, as there no use of 7z
+	V06.1 - LOOT support added, shortened install_utilities using functions
 """
 
 """ todos
@@ -50,28 +51,35 @@ def write_MO_ini(MO_destination, MO_config, skyrim_dir):
 
 
 def install_utilities(data):
-	#TODO few stuff needs to be loaded from input_json, clean
-	#TODO move to m1
 	#create tempdir
 	tmp_dir = tempfile.TemporaryDirectory(suffix='bgames_tools')
-	for utility in data.keys():
-		print('doing',utility)
-		if utility == 'Mod Organizer':
-			#TODO for MO handle MO_config
-			archive = pyunpack.Archive(data[utility]['path'])
-			archive.extractall(tmp_dir.name, auto_create_dir=False)
-			print('Moving Mod Organizer to',data[utility]['install_path'])
+	def unpack_to(target, auto_create_dir=False):
+		archive = pyunpack.Archive(data[utility]['path'])
+		archive.extractall(target, auto_create_dir=auto_create_dir)
+	#TODO FIX if directory to exists, its copies into it and then its to/what
+	def move_from(where, what, to):
+		print('Moving', what, 'to', to)
+		try:
+			shutil.move(where + r'\\'+ what, to)
+		except shutil.Error as me:
+			print("WARNING: {0}".format(me))
+	def copy_files(tmp_dir, files):
+		for afile in files:
+			print("Installing", afile, "to Skyrim's root")
 			try:
-				#TODO check when it installs to ModOrganizer\ModOrganizer
-				shutil.move(tmp_dir.name + r'\ModOrganizer', data[utility]['install_path'])
-			except shutil.Error as mo:
-				print("WARNING: {0}".format(mo))
-		elif utility == 'SKSE':
+				shutil.copy(tmp_dir + '\\' + afile, data[utility]['install_path'])
+			except PermissionError as pe_copy:
+				print("FAIL: Couldn't copy file: {0}| File already exists?"
+				.format(pe_copy.filename))
+	for utility in data.keys():
+		print('Installing', utility)
+		if utility == 'Mod Organizer': #shutil.move
+			unpack_to(tmp_dir.name)
+			move_from(tmp_dir.name, 'ModOrganizer', data[utility]['install_path'])
+		elif utility == 'SKSE': #shutil.copy and shutil.move
 			#own tempdir for skse
 			tmp_dir_skse = tempfile.TemporaryDirectory(suffix='skse')
-			#
-			archive = pyunpack.Archive(data[utility]['path'])
-			archive.extractall(tmp_dir_skse.name, auto_create_dir=False)
+			unpack_to(tmp_dir_skse.name)
 			skse_root_files = ["skse_1_07_03\\skse_1_9_32.dll",
 							   "skse_1_07_03\\skse_docs.txt",
 							   "skse_1_07_03\\skse_loader.exe",
@@ -79,49 +87,29 @@ def install_utilities(data):
 							   "skse_1_07_03\\skse_readme.txt",
 			        		   "skse_1_07_03\\skse_steam_loader.dll",
 			        		   "skse_1_07_03\\skse_whatsnew.txt"]
-			for skse_file in skse_root_files:
-				print("Installing", skse_file, "to Skyrim's root")
-				try:
-					shutil.copy(tmp_dir_skse.name + '\\' + skse_file, data[utility]['install_path'])
-				except PermissionError as pe_skse_copy:
-					print("FAIL: Couldn't copy file: {0}| File already exists?"
-					.format(pe_skse_copy.filename))
-			print('Moving SKSE scripts to',data[utility]['install_path'] + r'\\Data\\scripts')
-			try:
-				#TODO fix bug, if Skyrim\Data\scripts\ exists, it makes another scripts folder
-				shutil.move(tmp_dir_skse.name + r'\skse_1_07_03\Data\scripts',
-							data[utility]['install_path'] + r'\\Data\\scripts')
-			except shutil.Error as skse_script:
-				print("WARNING: {0}".format(skse_script))
+			#copy root files
+			copy_files(tmp_dir_skse.name, skse_root_files)
+			#move scripts
+			move_from(tmp_dir_skse.name, 'skse_1_07_03\Data\scripts',
+			data[utility]['install_path']  + r'\\Data\\scripts')
 			#done
 			try:
 				tmp_dir_skse.cleanup()
 			except PermissionError as pe_skse_clean:
 				print("WARNING: Can't remove file: {0}|Please clean it up manually"
 				.format(pe_skse_clean.filename))
-		elif utility == 'ENB':
-			archive = pyunpack.Archive(data[utility]['path'])
-			archive.extractall(tmp_dir.name, auto_create_dir=False)
-			for enb_file in ['WrapperVersion/d3d9.dll', 'WrapperVersion/enbhost.exe']:
-				print("Installing", enb_file, "to Skyrim's root")
-				try:
-					shutil.copy(tmp_dir.name + '\\' + enb_file, data[utility]['install_path'])
-				except PermissionError as pe_enb_copy:
-					print("FAIL: Couldn't copy file: {0}| File already exists?"
-					.format(pe_enb_copy.filename))
-		elif utility == 'Wrye Bash':
-			archive = pyunpack.Archive(data[utility]['path'])
-			archive.extractall(tmp_dir.name, auto_create_dir=False)
-			print('Moving Wrye Bash to',data[utility]['install_path'])
-			try:
-				shutil.move(tmp_dir.name + r'\Mopy', data[utility]['install_path'])
-			except shutil.Error as wryebash:
-				print("WARNING: {0}".format(wryebash))
+		elif utility == 'ENB': #shutil.copy
+			unpack_to(tmp_dir.name)
+			copy_files(tmp_dir.name, ['WrapperVersion/d3d9.dll', 'WrapperVersion/enbhost.exe'])
+		elif utility == 'LOOT': #shutil.move
+			unpack_to(tmp_dir.name)
+			move_from(tmp_dir.name, 'loot_0.10.3-0-g0fcf788_dev_Win32', data[utility]['install_path'])
+		elif utility == 'Wrye Bash': #shutil.move
+			unpack_to(tmp_dir.name)
+			move_from(tmp_dir.name, 'Mopy', data[utility]['install_path'])
 		else:
-			print('Moving',utility, 'to', data[utility]['install_path'])
-			archive = pyunpack.Archive(data[utility]['path'])
-			archive.extractall(data[utility]['install_path'],
-							   auto_create_dir=True)
+			print('Moving', utility, 'to', data[utility]['install_path'])
+			unpack_to(data[utility]['install_path'], auto_create_dir=True)
 
 	#all done cleanup
 	try:

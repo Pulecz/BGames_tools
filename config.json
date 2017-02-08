@@ -35,6 +35,14 @@
     },
     {
       "_comment_" : "https://github.com/matortheeternal/smash/releases",
+      "name": "LOOT",
+      "version": "0.10.3",
+      "download": "https://github.com/loot/loot/releases/download/0.10.3/loot_0.10.3-0-g0fcf788_dev_Win32.7z",
+      "sha1": "62e2de9277bd98527ba6848f253f89682b3950c8",
+      "install_path": "%SkyrimPath%\\Mods\\LOOT"
+    },
+    {
+      "_comment_" : "https://github.com/matortheeternal/smash/releases",
   		"name": "Mator Smash",
   		"version": "0.3.1",
   		"download": "https://github.com/matortheeternal/smash/releases/download/0.3.1/MatorSmash.zip",
@@ -80,6 +88,17 @@
         "toolbar": "true",
         "ownicon": "true",
         "binary": "%SkyrimPath%\\Mods\\TES5Edit\\TES5Edit.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "LOOT",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%SkyrimPath%\\Mods\\LOOT\\LOOT.exe",
         "arguments": "",
         "workingDirectory": "",
         "closeOnStart": "false",
