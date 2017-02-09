@@ -58,7 +58,7 @@ if __name__ == "__main__":
 	utilities_download_dir, #where to download
 	skyrim_dir) #for replacing %SkyrimPath in input_json
 
-	input("Is {0} the Skyrim dir?\nHit enter to confirm or ctrl+c to exit"
+	input("Is {0} the correct dir for Skyrim?\nHit enter to confirm or ctrl+c to exit"
 	.format(skyrim_dir))
 
 	#----------------------------- 1. Do Install -------------------------------
