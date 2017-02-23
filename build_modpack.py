@@ -1,7 +1,6 @@
 import re, os # parsing, scaning
 import json #for input output
 import hashlib #for make_checksum
-import shutil #for verify
 from urllib.request import urlopen # for web_parsing
 """
 V0.0.1 - basic parsing, making dirs and writing summary
@@ -15,7 +14,6 @@ V0.0.8 - Fallout 4 Support, getting Nexus categories
 V0.0.9 - lots of rewrites, dropped making directories and summary.csv, purpose is clear now
        - to validate nexus id at lest 3 digits needs to be in file name between - chars
 V0.1.0 - first usable thing, split mod_name_validator to build_modpack.py and verify_modpack.py
-       - keeping this file for this commit, then it will be only in split
 
 validates Nexus Mod files with pattern:
 	$name-$nexusid-$version
@@ -44,7 +42,8 @@ if switch_get_nexus_info:
 	
 #set
 switch_writeMetaFiles = True
-MO_bin = 'here'
+MO_bin = 'for_MO'
+modpack_json = 'summary.json'
 
 target = r'C:\Users\pulec\Downloads\sorter_test'
 #target = os.getcwd()
@@ -62,7 +61,7 @@ else:
 	input()
 	exit()
 
-#---------------------------------- get defs -----------------------------------
+#----------------------------------- defs ------------------------------------
 
 
 def get_skyrimgems_source():
@@ -78,7 +77,8 @@ def get_skyrimgems_source():
 def make_checksum(mod_file, chunk_size=1024):
 	#from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
 	#and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
-	print('Calculating checksum for', mod_file)
+	if debug:
+		print('Calculating checksum for', mod_file)
 	file_object = open(os.path.join(target, mod_file), 'rb')
 	sha1 = hashlib.sha1();
 	"""Lazy function (generator) to read a file piece by piece.
@@ -90,6 +90,7 @@ def make_checksum(mod_file, chunk_size=1024):
 		sha1.update(data)
 	return sha1.hexdigest()
 
+	
 def parse_nexus_mods(mods):
 	"""
 	returns dict with key of the filename of the mod(might be PITA if you want to access the data)
@@ -130,7 +131,8 @@ def parse_nexus_mods(mods):
 		try:
 			fetch = re.search(descriptions_RE,skyrimgems_source).group(1)
 		except AttributeError as re_e:
-			print('"{0}" not found on Skyrim GEMS.'.format(nexus_name))
+			if debug:
+				print('"{0}" not found on Skyrim GEMS.'.format(nexus_name))
 			return 'N/A'
 		#TODO replace by re
 		fetch.replace('[<span class="DG">DG</span>+<span class="HF">HF</span>+<span class="DB">DB</span>','[DG+HF+DB]')
@@ -145,7 +147,6 @@ def parse_nexus_mods(mods):
 	
 	
 	d = {}
-	directory_names = []
 	failed = []
 	re_nexus_id = r'\-(\d{3,})\-?' #- at least theree digits and optionaly -
 
@@ -219,77 +220,12 @@ def parse_nexus_mods(mods):
 			d[mod]['description'] = input('Insert your description: ')
 		if switch_ask_for_comment:
 			d[mod]['comment'] = input('Insert your comment: ')
-		#--------------------------- save dir_names ----------------------------
-		if switch_get_nexus_info:
-			if nexus_name is None: #failed to get nexus_name, save regular name
-				directory_names.append(name + '-' + nexus_id)
-			else:
-				directory_names.append(nexus_name + '-' + nexus_id)
-		else:
-			directory_names.append(name + '-' + nexus_id)
 	#--------------------------------finalize-----------------------------------
-	d['dir_names'] = directory_names
 	if debug:
 		print('These mods failed to get parsed:', failed)
 	return d
 
 
-#---------------------------------- load def -----------------------------------
-def try_load_json(json_file):
-	try:
-		with open(json_file, 'r') as input_file:
-			jsondata = json.load(input_file)
-		return jsondata
-	except FileNotFoundError:
-		print('FAIL: File {0} does not exist in this folder'.format(json_file))
-		return False
-	except JSONDecodeError as e:
-		print('FAIL: JSON Decode Error:\n  {0}'.format(e))
-		return False
-		
-def verify_mods(mods, data):
-	#mod is just file_name, used as keys in json data
-	for mod in mods:
-		if data.get(mod) is not None:
-			mod_checksum = make_checksum(mod)
-			if mod_checksum == data[mod]['sha1']:
-				print(mod,'verified')
-				#if the source file exists
-				source = os.path.join(target, mod)
-				if os.path.exists(source) is True:
-					destination = os.path.join(os.getcwd(),MO_bin + '/' + mod)
-					destination_dir = os.path.join(os.getcwd(), MO_bin)
-					if not os.path.exists(destination_dir):
-						os.makedirs(destination_dir)
-					print('Moving {0} to {1}'.format(source, destination))
-					try:
-						os.rename(source, destination)
-					except PermissionError as creepy_hands_err:
-						print('Cant move file', creepy_hands_err, 'some process is holding it\ntrying to copy')
-						try:
-							shutil.copy(source, destination)
-						except OSError as mods_copy_err:
-							print('ERROR: even copying failed, please report')
-					except OSError as mods_move_err:
-						print('Problem with moving',mods_move_err.filename)
-					if switch_writeMetaFiles:
-						print('Writing meta file to', destination + '.meta')
-						with open (destination + '.meta','w') as meta_file:
-							meta_file.write('[General]\n')
-							#if comments are avaliable
-							if data[mod].get('comment') is True:
-								meta_file.write('comment=' + data[mod]['comment'] + '\n')
-							meta_file.write('modID=' + data[mod]['modID'] + '\n')
-							meta_file.write('name=' + data[mod]['name'] + '\n')
-							if switch_get_nexus_info:
-								if data[mod]['nexus_name'] != None and data[mod]['nexus_name'] != None:
-									meta_file.write('modName=' + data[mod]['nexus_name'] + '\n')
-									meta_file.write('category=' + data[mod]['nexus_categoryN'] + '\n')
-							#TODO revive that special version parsing?
-							meta_file.write('version=' + data[mod]['version'] + '\n')
-		
-			
-#---------------------------------- save def -----------------------------------
 def try_save_json(json_file, data):
 	try:
 		with open(json_file, 'w') as input_file:
@@ -313,8 +249,9 @@ if __name__ == "__main__":
 			mods_list.append(item)
 
 	#-------------------------------- get info ---------------------------------
-	mods = parse_nexus_mods(mods_list)
+	print('Building modpack from all mod files in', target)
+	mods_data = parse_nexus_mods(mods_list)
 
 	#------------------------------- save json ---------------------------------
-	if len(mods['dir_names']) != 0: #some mod found
-		try_save_json('summary.json', mods)
+	if len(mods_data) != 0: #some mod found
+		try_save_json(modpack_json, mods_data)
