@@ -15,18 +15,21 @@ V0.0.9 - lots of rewrites, dropped making directories and summary.csv, purpose i
        - to validate nexus id at lest 3 digits needs to be in file name between - chars
 V0.1.0 - first usable thing, split mod_name_validator to build_modpack.py and verify_modpack.py
 
-verify_modpack.py verifies a bunch of mods downloaded from Nexus in a target folder against $modpack.json provided by build_modpack.py
-mod is verified when checksum of the downloade_file is same as checksum of the entry for the mod in $modpack.json
-that mod is then moved (or copied if moving failes) to MO_bin along with MO like meta files (except versions I guess) so Mod Organizer can work with it
+Verifies a bunch of mods downloaded from Nexus in a target folder against $modpack.json provided by build_modpack.py.
+Mod is verified when checksum of the downloade_file is same as checksum of the entry for the mod in $modpack.json.
+Verified mod is then moved (or copied if moving failes) to MO_bin along with MO like meta files (except versions I guess) so Mod Organizer can work with it.
 
 
 TODOs:
-	Inspire me!
+  - Print links for missing files, so users can easilly download them
+  - With that make soma kind of summary, how many files verified, etc
+  - Mod Organizer doesn't need meta files from us, it can query it allright, might be useful for some mods that got deleted from Nexus
 """
 #-------------------------------------Input-------------------------------------
 #Game = 'Fallout 4'
 Game = 'Skyrim'
 debug = False
+target = os.getcwd()
 
 #get
 switch_ask_for_description = False
@@ -38,10 +41,7 @@ if switch_get_nexus_info:
 #set
 switch_writeMetaFiles = True
 MO_bin = 'for_MO'
-modpack_json = 'summary.json'
-
-target = r'C:\Users\pulec\Downloads\sorter_test'
-#target = os.getcwd()
+modpack_json = 'modpack.json'
 
 #validate_input
 if Game == 'Fallout 4':

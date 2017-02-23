@@ -15,10 +15,11 @@ V0.0.9 - lots of rewrites, dropped making directories and summary.csv, purpose i
        - to validate nexus id at lest 3 digits needs to be in file name between - chars
 V0.1.0 - first usable thing, split mod_name_validator to build_modpack.py and verify_modpack.py
 
-validates Nexus Mod files with pattern:
-	$name-$nexusid-$version
-and creates directories, with pattern:
-	$nexusid-$name
+
+Verify if file is Nexus mod (by regex /\-(\d{3,})\-/) and collect info about it, do a checksum and save it as modpack_json, which can be used by others using verify_modpack.py
+Currently setup for **Skyrim**, for **Fallout 4** support change Game var in Input (line 31+)
+
+Script will scan the current directory (where the script is launched) (or change that in variable target), excluding folders and *.meta files.
 
 TODOs
 	hashlib checksums
@@ -32,6 +33,7 @@ TODOs
 #Game = 'Fallout 4'
 Game = 'Skyrim'
 debug = False
+target = os.getcwd()
 
 #get
 switch_ask_for_description = False
@@ -43,10 +45,7 @@ if switch_get_nexus_info:
 #set
 switch_writeMetaFiles = True
 MO_bin = 'for_MO'
-modpack_json = 'summary.json'
-
-target = r'C:\Users\pulec\Downloads\sorter_test'
-#target = os.getcwd()
+modpack_json = 'modpack.json'
 
 #validate_input
 if Game == 'Fallout 4':
