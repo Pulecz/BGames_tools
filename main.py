@@ -1,8 +1,8 @@
 #main V0.4
-#V0.1, basic calling defs from modules
-#V0.2, some imports and functions here, load json and etc
-#V0.3, lot of polishing
-#V0.4, less functions, less modules, no subprocess
+#V0.1 - basic calling defs from modules
+#V0.2 - some imports and functions here, load json and etc
+#V0.3 - lot of polishing
+#V0.4 - less functions, less modules, no subprocess
 
 #------------------------------- import modules --------------------------------
 from json import load, JSONDecodeError #for def load_json:
@@ -10,9 +10,9 @@ import m0prerequisites
 import m1utils_install
 import sys # for exits
 #------------------------------------config-------------------------------------
-json_file = 'config.json'
+json_file = 'utils.json'
 utilities_download_dir = 'utilities'
-print_guidance_switch = False
+print_guidance_switch = True
 #-------------------------------------defs--------------------------------------
 
 
@@ -36,6 +36,7 @@ def print_guidance():
 	print("Using TES5 Edit cleanup Master files, here is how: http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Clean_The_Bethesda_ESMs")
 	print("When you're finished do a Merged Patch, here is how: https://www.youtube.com/watch?v=BtLolEgVMTg")
 	print("When you're finished do a Bashed Patch, here is how: https://www.youtube.com/watch?v=W1Es06MtAZM, http://wiki.step-project.com/Bashed_Patch or https://www.reddit.com/r/skyrimmods/wiki/beginners_guide_quickstart#wiki_create_a_bashed_patch")
+	print("Then use verify_modpack.py to get whole modpack to ModOrganizer's download folder and follow the installation procedure described in modpack")
 	input('Confirm by any key when done')
 
 

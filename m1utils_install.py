@@ -1,31 +1,32 @@
-#m1utils_install V0.6
-
 """ change-log
 	V01.0 - general improvements
 	V02.0 - changed ENB install to 7z, enb and MO install via 7z now, putt local_repo to dict
 	V03.0 - get_sevenzip_bin and write_MO_ini function and some more stuff
 	V04.0 - deleted LOOT and Wrye support, first changes to work with m0prerequisites
 	V05.0 - get_sevenzip_bin replaced by logic in main which is TODO function, no config is here, main sends everything, make_mods_folder_in_base deleted, no longer needed
-	V06.0 - most of it threw out, as there no use of 7z
+	V06.0 - most of it threw out, as there no use of 7z, replaced by pyunpack
 	V06.1 - LOOT support added, shortened install_utilities using functions
-"""
 
-""" todos
-	todo0 #m1utils_install.validate()
+TODOs
+	0 #m1utils_install.validate()
 		- function for validating the installed procedure
-	todo1 ENB_install, do not install enblocal.ini but pick recommended one
+	1 ENB_install, do not install enblocal.ini but pick recommended one
 		- use DxDiag to determine ram,vram,gpu, etc
 		- use ENB_config_install_fullpath to extract correct ini
-	todo2 use ENB Manager and Changer
+	2 use ENB Manager and Changer
 		Mods\enb_manager and copy enbhost.exe and d3d9.dll to ENB Versions\name
-	and just about everything which is marked as #TODO
+	and everything else which is marked as #TODO
 """
 
-import shutil
-import pyunpack
-import tempfile
+import pyunpack #for unpacking, needs patool
+import shutil #for move and copy of "dirty" archives
+import tempfile #for unpacking "dirty" archives
+
 
 def write_MO_ini(MO_destination, MO_config, skyrim_dir):
+	"""
+	Saves ModOrganzier.ini in its specific format
+	"""
 	print("Writing ModOrganizer.ini")
 	with open(MO_destination + r'\\ModOrganizer.ini','w') as MO_ini:
 		#[Plugins]
@@ -51,6 +52,17 @@ def write_MO_ini(MO_destination, MO_config, skyrim_dir):
 
 
 def install_utilities(data):
+	"""
+	Handles intallation of:
+		Mod Organizer
+		ENB for Skyrim
+		TES5Edit
+		LOOT
+		Mator Smash
+		Wrye Bash
+	
+	and tries to cleanup after "dirty" archives
+	"""
 	#create tempdir
 	tmp_dir = tempfile.TemporaryDirectory(suffix='bgames_tools')
 	def unpack_to(target, auto_create_dir=False):

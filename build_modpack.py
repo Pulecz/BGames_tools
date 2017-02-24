@@ -2,6 +2,7 @@ import re, os # parsing, scaning
 import json #for input output
 import hashlib #for make_checksum
 from urllib.request import urlopen # for web_parsing
+
 """
 V0.0.1 - basic parsing, making dirs and writing summary
 V0.0.2 - implented asking for comment, skipping directories in scan, better {debug, printing, summary, making dirs}
@@ -64,6 +65,10 @@ else:
 
 
 def get_skyrimgems_source():
+	"""
+	Retrieves html source from skyrimgems
+	Used later for getting descriptions for the mods
+	"""
 	try: # handle if url is not reachable error
 		foo = urlopen('http://www.skyrimgems.com')
 	except ValueError as url_e:
@@ -74,8 +79,10 @@ def get_skyrimgems_source():
 
 	
 def make_checksum(mod_file, chunk_size=1024):
-	#from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
-	#and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
+	"""
+	from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
+	and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
+	"""
 	if debug:
 		print('Calculating checksum for', mod_file)
 	file_object = open(os.path.join(target, mod_file), 'rb')
@@ -92,10 +99,13 @@ def make_checksum(mod_file, chunk_size=1024):
 	
 def parse_nexus_mods(mods):
 	"""
-	returns dict with key of the filename of the mod(might be PITA if you want to access the data)
+	returns dict with key of the filename of the mod
 	"""
 	def get_nexus_info(nexus_id):
-		#url = 'http://www.nexusmods.com/skyrim/mods/30947/'70656
+		"""
+		Tries to return title and categories from nexus mods like:
+		url = 'http://www.nexusmods.com/skyrim/mods/30947/'
+		"""
 		url = 'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
 		try: # handle if url is not reachable error
 			foo = urlopen(url)
@@ -126,6 +136,9 @@ def parse_nexus_mods(mods):
 			return (None,None,None)
 
 	def search_skyrimgems_source(nexus_name): #TODO needs some filtering
+		"""
+		tries to match mod description with this crazy regex and then tries to do some filtering
+		"""
 		descriptions_RE = '.*' + nexus_name + '.*\n\s+\<td\s\w+\S+\>(.*)<\Std\>'
 		try:
 			fetch = re.search(descriptions_RE,skyrimgems_source).group(1)
@@ -226,6 +239,9 @@ def parse_nexus_mods(mods):
 
 
 def try_save_json(json_file, data):
+	"""
+	Try to save JSON on Windows
+	"""
 	try:
 		with open(json_file, 'w') as input_file:
 			input_file.write(json.dumps(data))

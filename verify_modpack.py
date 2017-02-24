@@ -60,8 +60,11 @@ else:
 
 
 def make_checksum(mod_file, chunk_size=1024):
-	#from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
-	#and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
+	"""
+	Make checksum in sha1 for big files
+	from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
+	and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
+	"""
 	if debug:
 		print('Calculating checksum for', mod_file)
 	file_object = open(os.path.join(target, mod_file), 'rb')
@@ -77,6 +80,9 @@ def make_checksum(mod_file, chunk_size=1024):
 
 
 def try_load_json(json_file):
+	"""
+	Tries to load valid json
+	"""
 	try:
 		with open(json_file, 'r') as input_file:
 			jsondata = json.load(input_file)
@@ -90,7 +96,10 @@ def try_load_json(json_file):
 		
 
 def verify_mods(mods, data):
-	#mod is just file_name, used as keys in json data
+	"""
+	Does the main thing
+	mod is just file_name, used as keys in json data
+	"""
 	for mod in mods:
 		if data.get(mod) is not None:
 			mod_checksum = make_checksum(mod)

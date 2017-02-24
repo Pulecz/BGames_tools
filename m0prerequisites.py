@@ -1,17 +1,23 @@
-#m0prerequisities V0.5
-#V0.1, basic idea, download and unpack
-#V0.2, rewriten to functions, get_sevenzip_dir and cleanup added
-#V0.3, just definitions here, the control is moved to main.py
-#V0.4, no config is here, main sends everything, unpack_to_bin does not overwrite, no need for re
-#V0.5 big rewrite, get_skyrim_dir and dl_utilities should handle all Prerequisites
+""" change-log
+	V0.1 - basic idea, download and unpack
+	V0.2 - rewriten to functions, get_sevenzip_dir and cleanup added
+	V0.3 - just definitions here, the control is moved to main.py
+	V0.4 - no config is here, main sends everything, unpack_to_bin does not overwrite, no need for re
+	V0.5 - big rewrite, get_skyrim_dir and dl_utilities should handle all Prerequisites
 
+TODOs
+	if download() returns False, handle it
+"""
 from winreg import HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx #for get_skyrim_dir
 import urllib.request, os, sys #for download
 import hashlib #for verifying
 
 
-
 def get_skyrim_dir():
+	"""
+	Tries to read HKLM/SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim
+	in registry	for value installed_path to return skyrim_dir
+	"""
 	#reg_path might be different on 32bit systems
 	reg_path = r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim"
 	reg_value = "installed path"
@@ -23,10 +29,25 @@ def get_skyrim_dir():
 		raise ValueError #leads to exit 99 in main.py
 	return skyrim_dir
 
+	
 def dl_utilities(input_json, target_dir, skyrim_dir):
+	"""
+	Loops over input_json and tries to verify each utility
+	If the file has a bad checksum or is not found, its downloaded to target_dir
+	Returns dict with info needed for installation
+	
+	skyrim_dir is needed for correct install_path
+	"""
 	result = {}
 	def download(url, dest):
+		"""
+		simple urlretrieve with progressbar and makedirs
+		supports downloading with referer
+		"""
 	    def download_with_referer(url, filename, referer):
+		"""
+		raw download with added header for referer
+		"""
 	        #set the header
 	        req = urllib.request.Request(url)
 	        req.add_header('Referer', referer)
@@ -43,9 +64,11 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 	            progress += len(data)
 	            sys.stdout.write("\rGot {0} bytes".format(progress))
 
+				
 	    def reporthook(blocknum, blocksize, totalsize):
-	        #progress bar from
-	        #http://stackoverflow.com/questions/13881092/download-progressbar-for-python-3
+	        """progress bar from
+	        http://stackoverflow.com/questions/13881092/download-progressbar-for-python-3
+			"""
 	    	readsofar = blocknum * blocksize
 	    	if totalsize > 0:
 	    		percent = readsofar * 1e2 / totalsize
@@ -80,6 +103,11 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 	        print(e)
 	        return False
 	def call_download(target_dir):
+		"""
+		call download() and if sucessfull calculates checksum
+		and compares with checksum in input_json (crc_config)
+		returns dict with checksum, install_path, path and verified
+		"""
 		hex_crc_same_as_config_crc = True
 		print('\nDownloading', utility['name'])
 		path = download(utility['download'], target_dir)

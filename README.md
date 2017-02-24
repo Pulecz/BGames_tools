@@ -1,31 +1,64 @@
 # BGames_tools
 
+Tries to help with gettting some of the Bethesda games playable by installing utilies for modding support and offers some helpers to install "modpacks"
+
+Supported:
+* **TES 5 Skyrim**
+* **Fallout 4** (***WIP!***)
+
+Ideall usage should be:
+* get utils.json for main.py
+* run main.py
+* get some modpack.json
+* run verify_modpack.py
+* open ModOrganizer and follow the modpack's install instructions
+
+
 ## main.py
-Script to prepare fresh Skyrim installation for modding.
+
+### Dependencies:
+- pyunpack
+- patool
+
+Python script to prepare fresh Skyrim installation for modding.
 
 Skyrim Launcher needs to be run at least once, to create entry in registry.
 
-The script tries to do some of the things described in [Skyrim Revisited - Legendary Edition Guide](http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition).
-
 1. Downloads all utilities defined in config.json or checks if they are already downloaded based on checksum
-2. Validates the Skyrim folder, prompts user to confirm them or edit them.
+2. Validates the Skyrim folder, prompts user to confirm them or edit the destination.
 3. Unpacks all the utilities to specified install_path, these are specified:
 	- [Mod Organizer](http://www.nexusmods.com/skyrim/mods/1334/)
 	- [SKSE](http://skse.silverlock.org) - unpacks to Skyrim root folder and scripts to Skyrim/data.
 	- [ENB](http://enbdev.com/download_mod_tesskyrim.html) - unpacks 'WrapperVersion/d3d9.dll' and 'WrapperVersion/enbhost.exe' to Skyrim root folder.
+	- [LOOT](https://loot.github.io/)
 	- [Wrye Bash](http://www.nexusmods.com/skyrim/mods/1840/)
 	- [TES5Edit](http://www.nexusmods.com/skyrim/mods/25859/)
 	- [Mator Smash](https://github.com/matortheeternal/smash/releases)
-4. Writes ModOrganizer.ini with paths to other tools and few settings from [here](http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Configure_Mod_Organizer).
-5. If allowed prints some guidance.
+4. Writes ModOrganizer.ini with launchers to other tools
+5. Prints some guidance what to do next.
 
+### Usage
+* Install python3 with pip support
+* git clone this or download as zip
+* start cmd in the folder do:
+```
+pip install -r requirements.txt
+```
+* to install pyunpack and patool modules
+* then check utils.json and run the main.py
 
 ## build_modpack.py
-Verify if file is Nexus mod (by regex /\-(\d{3,})\-/) and collect info about it, do a checksum and save it as modpack_json, which can be used by others using verify_modpack.py
+Verifies if file is Nexus mod (by regex /\-(\d{3,})\-/) and collects info about it.
+
+Does a checksum and save it as modpack_json('modpack.json'), which can be used by others using verify_modpack.py
+
 Currently setup for **Skyrim**, for **Fallout 4** support change Game var in Input (line 31+)
 
 Script will scan the current directory (where the script is launched) (or change that in variable target), excluding folders and *.meta files.
 
+### Usage
+* Copy the script to folder with prepared nexus mods (folders are not supported yet)
+* Run build_modpack.py and check the output json
 
 #### Options:
  - Game = 'Fallout 4' or 'Skyrim' (sets the links and few other option for each Game)
@@ -55,10 +88,17 @@ Script will scan the current directory (where the script is launched) (or change
 ## verify_modpack.py
 
 Verifies a bunch of mods downloaded from Nexus in a target folder against $modpack.json provided by build_modpack.py.
+
 Mod is verified when checksum of the downloade_file is same as checksum of the entry for the mod in $modpack.json.
-Verified mod is then moved (or copied if moving failes) to MO_bin along with MO like meta files (except versions I guess) so Mod Organizer can work with it.
+
+Verified mod is then moved (or copied if moving failes) to MO_bin and MO like meta files are written (versions needs to be parsed) so Mod Organizer can work with it.
 
 Script will scan the current directory (where the script is launched) (or change that in variable target), excluding folders and *.meta files.
+
+### Usage
+* Copy the script to folder with your "local nexus mods repository" (folders are not supported yet)
+* Copy modpack.json from build_modpack.py to the same folder
+* Run verify_modpack.py and let it move/copy mods to new folder
 
 #### Options:
  - modpack_json = source.json
