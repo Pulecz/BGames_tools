@@ -44,64 +44,64 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 		simple urlretrieve with progressbar and makedirs
 		supports downloading with referer
 		"""
-	    def download_with_referer(url, filename, referer):
-		"""
-		raw download with added header for referer
-		"""
-	        #set the header
-	        req = urllib.request.Request(url)
-	        req.add_header('Referer', referer)
-	        urlfile = urllib.request.urlopen(req)
-	        #write the file
-	        progress = 0
-	        f = open(filename, "wb")
-	        while True:
-	            data = urlfile.read(4096)
-	            if not data:
-	                sys.stdout.write("\n")
-	                break
-	            f.write(data)
-	            progress += len(data)
-	            sys.stdout.write("\rGot {0} bytes".format(progress))
+		def download_with_referer(url, filename, referer):
+			"""
+			raw download with added header for referer
+			"""
+			#set the header
+			req = urllib.request.Request(url)
+			req.add_header('Referer', referer)
+			urlfile = urllib.request.urlopen(req)
+			#write the file
+			progress = 0
+			f = open(filename, "wb")
+			while True:
+				data = urlfile.read(4096)
+				if not data:
+					sys.stdout.write("\n")
+					break
+				f.write(data)
+				progress += len(data)
+				sys.stdout.write("\rGot {0} bytes".format(progress))
 
 				
-	    def reporthook(blocknum, blocksize, totalsize):
-	        """progress bar from
-	        http://stackoverflow.com/questions/13881092/download-progressbar-for-python-3
+		def reporthook(blocknum, blocksize, totalsize):
+			"""progress bar from
+			http://stackoverflow.com/questions/13881092/download-progressbar-for-python-3
 			"""
-	    	readsofar = blocknum * blocksize
-	    	if totalsize > 0:
-	    		percent = readsofar * 1e2 / totalsize
-	    		s ="\r%5.1f%% %*d / %d" % (
-	    			percent, len(str(totalsize)), readsofar, totalsize)
-	    		sys.stdout.write(s)
-	    		if readsofar >= totalsize: # near the end
-	    			sys.stdout.write("\n")
-	    	else: # total size is unknown
-	    		sys.stdout.write("read %d\n" % (readsofar,))
+			readsofar = blocknum * blocksize
+			if totalsize > 0:
+				percent = readsofar * 1e2 / totalsize
+				s ="\r%5.1f%% %*d / %d" % (
+					percent, len(str(totalsize)), readsofar, totalsize)
+				sys.stdout.write(s)
+				if readsofar >= totalsize: # near the end
+					sys.stdout.write("\n")
+			else: # total size is unknown
+				sys.stdout.write("read %d\n" % (readsofar,))
 
-	    #filename is url from last position of '/', the + 1 is exclude it
-	    filename = url[url.rfind('/') + 1:]
-	    target = dest + '/' + filename
+		#filename is url from last position of '/', the + 1 is exclude it
+		filename = url[url.rfind('/') + 1:]
+		target = dest + '/' + filename
 
-	    if not os.path.exists(dest):
-	        try:
-	            os.mkdir(dest)
-	        except PermissionError:
-	            return False
+		if not os.path.exists(dest):
+			try:
+				os.mkdir(dest)
+			except PermissionError:
+				return False
 
-	    print("Downloading file {0}".format(filename))
-	    if 'enbdev.com/' in url:
-	        #TODO try to check all was fine?
-	        referer = 'http://enbdev.com/download_mod_tesskyrim.html'
-	        download_with_referer(url, target, referer)
-	        return target
-	    try:
-	        path, header = urllib.request.urlretrieve(url, target, reporthook)
-	        return path #should be same as target
-	    except urllib.error.HTTPError as e:
-	        print(e)
-	        return False
+		print("Downloading file {0}".format(filename))
+		if 'enbdev.com/' in url:
+			#TODO try to check all was fine?
+			referer = 'http://enbdev.com/download_mod_tesskyrim.html'
+			download_with_referer(url, target, referer)
+			return target
+		try:
+			path, header = urllib.request.urlretrieve(url, target, reporthook)
+			return path #should be same as target
+		except urllib.error.HTTPError as e:
+			print(e)
+			return False
 	def call_download(target_dir):
 		"""
 		call download() and if sucessfull calculates checksum

@@ -43,7 +43,7 @@ def write_MO_ini(MO_destination, MO_config, skyrim_dir):
 			MO_ini.write(str(key + 1) + '\\toolbar=' + string['toolbar'] + '\n')
 			MO_ini.write(str(key + 1) + '\\ownicon=' + string['ownicon'] + '\n')
 			if string['custom'] == 'true':
-				MO_ini.write(str(key + 1) + '\\binary=' + string['binary'].replace('%SkyrimPath%',skyrim_dir).replace('\\','/') + '\n') #TODO make it nicer #TODO the json key is not proper yet
+				MO_ini.write(str(key + 1) + '\\binary=' + string['binary'].replace('%SkyrimPath%',skyrim_dir).replace('\\','/') + '\n')
 				MO_ini.write(str(key + 1) + '\\arguments=' + string['arguments'].replace('\\','/') + '\n')
 				MO_ini.write(str(key + 1) + '\\workingDirectory=' + string['workingDirectory'].replace('\\','/') + '\n')
 				MO_ini.write(str(key + 1) + '\\closeOnStart=' + string['closeOnStart'].replace('\\','/') + '\n')

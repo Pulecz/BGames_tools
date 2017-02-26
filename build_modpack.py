@@ -64,6 +64,21 @@ else:
 #----------------------------------- defs ------------------------------------
 
 
+def scan_dir(target):
+	"""
+	gets names of mod archives from directory target
+	"""
+	mods_list = []
+	for root, dirs, files in os.walk(target):
+		for file in files:
+			if '.meta' in file:
+				continue
+			if 'mod.info' in file:
+				continue
+			mods_list.append(os.path.join(root, file))
+	return mods_list
+
+	
 def get_skyrimgems_source():
 	"""
 	Retrieves html source from skyrimgems
@@ -80,12 +95,13 @@ def get_skyrimgems_source():
 	
 def make_checksum(mod_file, chunk_size=1024):
 	"""
+	Make checksum in sha1 for big files
 	from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
 	and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
 	"""
 	if debug:
 		print('Calculating checksum for', mod_file)
-	file_object = open(os.path.join(target, mod_file), 'rb')
+	file_object = open(mod_file, 'rb')
 	sha1 = hashlib.sha1();
 	"""Lazy function (generator) to read a file piece by piece.
 	Default chunk size: 1k."""
@@ -100,6 +116,8 @@ def make_checksum(mod_file, chunk_size=1024):
 def parse_nexus_mods(mods):
 	"""
 	returns dict with key of the filename of the mod
+	mod is full path
+	mod_file_name is just file_name, used as keys in json data
 	"""
 	def get_nexus_info(nexus_id):
 		"""
@@ -167,25 +185,26 @@ def parse_nexus_mods(mods):
 		skyrimgems_source = get_skyrimgems_source()
 
 	for mod in mods:
+		mod_file_name = mod[mod.rfind('\\') + 1:]
 		#---------------------- get_name_nexus_id_version ----------------------
-		extension = mod[mod.rfind('.'):]
+		extension = mod_file_name[mod_file_name.rfind('.'):]
 		#TODO few more tries?
 		try:
-			nexus_id = re.search(re_nexus_id, mod).group(1)
+			nexus_id = re.search(re_nexus_id, mod_file_name).group(1)
 		except AttributeError as re_error_nexus_id:
-			print('\nERROR: For item "{0}" regex failed, skipping\n'.format(mod))
+			print('\nERROR: For item "{0}" regex failed, skipping\n'.format(mod_file_name))
 			failed.append(mod)
 			continue
 		re_name_version = re.compile('(.*)-' + nexus_id + '-?(.*)' + extension)
 		if debug:
-			print('Using re {0} on {1}'.format(re_name_version.pattern, mod))
+			print('Using re {0} on {1}'.format(re_name_version.pattern, mod_file_name))
 		try:
-			name = re_name_version.search(mod).group(1)
+			name = re_name_version.search(mod_file_name).group(1)
 		except AttributeError as re_error_mod_name:
 			#todo handle cases without no Name
 			name = None
 		try:
-			version = re.search(re_name_version, mod).group(2)
+			version = re.search(re_name_version, mod_file_name).group(2)
 		except AttributeError as re_error_mod_version:
 			version = 'N\A'
 		#--------------------------- get_nexus_info ----------------------------
@@ -198,40 +217,40 @@ def parse_nexus_mods(mods):
 				nexus_name, nexus_modCategoryN, nexus_modCategory = None, None, None
 		#----------------------------- print info ------------------------------
 		if version == 'N\A':
-			print('Valited {0} | {1}.{2}'.format(mod, name, nexus_id))
+			print('\nValidated {0}\nName:{1}\nID:{2}'.format(mod_file_name, name, nexus_id))
 		else:
-			print('Valited {0} | {1}.{2}-{3}'.format(mod, name, nexus_id, version))
+			print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}'.format(mod_file_name, name, nexus_id, version))
 		if debug:
 			print('file_name:', name + '-' + nexus_id + '-' + version + extension)
-			print('real_file_name:', mod)
+			print('real_file_name:', mod_file_name)
 			print('name:', name)
 			print('nexus_id:', nexus_id)
 			print('version:', version)
 			print('extension:', extension)
-			print('Is file_name correct? ', os.path.exists(os.path.join(target,mod)))
+			print('Is file_name correct? ', os.path.exists(mod))
 			if switch_get_nexus_info:
 				print('mod_name:', nexus_name)
 				print('nexus_modCategoryN:', nexus_modCategoryN)
 				print('nexus_modCategory:', nexus_modCategory)
 		#------------------------------ save info ------------------------------
-		d[mod] = {}
-		d[mod]['name'] = name
-		d[mod]['file_name'] = name + '-' + nexus_id + '-' + version + extension
-		d[mod]['sha1'] = make_checksum(mod)
-		d[mod]['modID'] = nexus_id
-		d[mod]['nexus_link'] = 'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
-		d[mod]['version'] = version
+		d[mod_file_name] = {}
+		d[mod_file_name]['name'] = name
+		d[mod_file_name]['file_name'] = name + '-' + nexus_id + '-' + version + extension
+		d[mod_file_name]['sha1'] = make_checksum(mod)
+		d[mod_file_name]['modID'] = nexus_id
+		d[mod_file_name]['nexus_link'] = 'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
+		d[mod_file_name]['version'] = version
 		if switch_get_nexus_info:
-			d[mod]['nexus_name'] = nexus_name
-			d[mod]['nexus_categoryN'] = nexus_modCategoryN
-			d[mod]['nexus_category'] = nexus_modCategory
+			d[mod_file_name]['nexus_name'] = nexus_name
+			d[mod_file_name]['nexus_categoryN'] = nexus_modCategoryN
+			d[mod_file_name]['nexus_category'] = nexus_modCategory
 			if switch_get_skyrimgems_desc and nexus_name is not None:
-				d[mod]['skyrimgems_desc'] = search_skyrimgems_source(nexus_name)
+				d[mod_file_name]['skyrimgems_desc'] = search_skyrimgems_source(nexus_name)
 		#custom input
 		if switch_ask_for_description:
-			d[mod]['description'] = input('Insert your description: ')
+			d[mod_file_name]['description'] = input('Insert your description: ')
 		if switch_ask_for_comment:
-			d[mod]['comment'] = input('Insert your comment: ')
+			d[mod_file_name]['comment'] = input('Insert your comment: ')
 	#--------------------------------finalize-----------------------------------
 	if debug:
 		print('These mods failed to get parsed:', failed)
@@ -253,15 +272,7 @@ def try_save_json(json_file, data):
 
 if __name__ == "__main__":
 	#-----------------------------scan current dir------------------------------
-	#get mod_list - names of mod archives from directory target
-	mods_list = []
-	for item in os.listdir(target):
-		#skip meta files
-		if '.meta' in item:
-			continue
-		#skip directories
-		if os.path.isfile(os.path.join(target,item)):
-			mods_list.append(item)
+	mods_list = scan_dir(target)
 
 	#-------------------------------- get info ---------------------------------
 	print('Building modpack from all mod files in', target)

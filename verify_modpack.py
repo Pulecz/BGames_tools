@@ -24,6 +24,9 @@ TODOs:
   - Print links for missing files, so users can easilly download them
   - With that make soma kind of summary, how many files verified, etc
   - Mod Organizer doesn't need meta files from us, it can query it allright, might be useful for some mods that got deleted from Nexus
+  - do a check first if the files is already copied, or check how shutil does it
+  - calculate how much space the copy to MO_bin will take and if there is enough space
+  - write plugins.txt, loadorder.txt, skyrim.ini to MO profile
 """
 #-------------------------------------Input-------------------------------------
 #Game = 'Fallout 4'
@@ -39,8 +42,9 @@ if switch_get_nexus_info:
 	switch_get_skyrimgems_desc = True #it uses nexus_name from Nexus
 	
 #set
+switch_move_allowed = False
 switch_writeMetaFiles = True
-MO_bin = 'for_MO'
+MO_bin = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
 modpack_json = 'modpack.json'
 
 #validate_input
@@ -59,6 +63,20 @@ else:
 #----------------------------------- defs ------------------------------------
 
 
+def scan_dir(target):
+	"""
+	gets names of mod archives from directory target
+	"""
+	mods_list = []
+	for root, dirs, files in os.walk(target):
+		for file in files:
+			if '.meta' in file:
+				continue
+			if 'mod.info' in file:
+				continue
+			mods_list.append(os.path.join(root, file))
+	return mods_list
+
 def make_checksum(mod_file, chunk_size=1024):
 	"""
 	Make checksum in sha1 for big files
@@ -67,7 +85,7 @@ def make_checksum(mod_file, chunk_size=1024):
 	"""
 	if debug:
 		print('Calculating checksum for', mod_file)
-	file_object = open(os.path.join(target, mod_file), 'rb')
+	file_object = open(mod_file, 'rb')
 	sha1 = hashlib.sha1();
 	"""Lazy function (generator) to read a file piece by piece.
 	Default chunk size: 1k."""
@@ -90,6 +108,7 @@ def try_load_json(json_file):
 	except FileNotFoundError:
 		print('FAIL: File {0} does not exist in this folder'.format(json_file))
 		return False
+		exit(1)
 	except JSONDecodeError as e:
 		print('FAIL: JSON Decode Error:\n  {0}'.format(e))
 		return False
@@ -98,65 +117,79 @@ def try_load_json(json_file):
 def verify_mods(mods, data):
 	"""
 	Does the main thing
-	mod is just file_name, used as keys in json data
+	mod is full path
+	mod_file_name is just file_name, used as keys in json data
 	"""
+	#def transfer(source, target):
+	
+	def writeMetaFiles(mod_file_name):
+		if debug:
+			print('Writing meta file to', destination + '.meta')
+		with open (destination + '.meta','w') as meta_file:
+			meta_file.write('[General]\n')
+			#if comments are avaliable
+			if data[mod_file_name].get('comment') is True:
+				meta_file.write('comment=' + data[mod_file_name]['comment'] + '\n')
+			meta_file.write('modID=' + data[mod_file_name]['modID'] + '\n')
+			meta_file.write('name=' + data[mod_file_name]['name'] + '\n')
+			if switch_get_nexus_info:
+				if data[mod_file_name]['nexus_name'] != None and data[mod_file_name]['nexus_name'] != None:
+					meta_file.write('modName=' + data[mod_file_name]['nexus_name'] + '\n')
+					meta_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n')
+			#TODO revive that special version parsing?
+			meta_file.write('version=' + data[mod_file_name]['version'] + '\n')				
 	for mod in mods:
-		if data.get(mod) is not None:
+		mod_file_name = mod[mod.rfind('\\') + 1:]
+		if data.get(mod_file_name) is not None:
 			mod_checksum = make_checksum(mod)
-			if mod_checksum == data[mod]['sha1']:
-				print('[OK]',mod)
+			if mod_checksum == data[mod_file_name]['sha1']:
+				print('[OK]',mod_file_name)
 				#if the source file exists
-				source = os.path.join(target, mod)
+				source = mod
 				if os.path.exists(source) is True:
-					destination = os.path.join(os.getcwd(),MO_bin + '/' + mod)
+					destination = os.path.join(os.getcwd(),MO_bin + '/' + mod_file_name)
 					destination_dir = os.path.join(os.getcwd(), MO_bin)
 					if not os.path.exists(destination_dir):
 						os.makedirs(destination_dir)
 					if debug:
 						print('Moving {0} to {1}'.format(source, destination))
-					try:
-						os.rename(source, destination)
-					except PermissionError as creepy_hands_err:
-						print('Cant move file', creepy_hands_err.filename, 'some process is holding it\nTrying to copy')
+					if switch_move_allowed:
 						try:
-							copy_out = shutil.copy(source, destination)
-							if destination == copy_out:
-								print('Copy went OK!')
+							os.rename(source, destination)
+						except PermissionError as creepy_hands_err:
+							print('Cant move file', creepy_hands_err.filename, 'some process is holding it\nTrying to copy')
+							try:
+								copy_out = shutil.copy(source, destination)
+								if destination == copy_out:
+									print('Copy went OK!')
+							except OSError as mods_try_copy_when_move_failed_err:
+								print('ERROR: even copying failed, please report')
+						except OSError as mods_move_err:
+							print('Problem with moving',mods_move_err.filename)
+					else:
+						try:
+							copy_main = shutil.copy(source, destination)
+							if destination == copy_main:
+								if debug:
+									print('Copy went OK!')
 						except OSError as mods_copy_err:
-							print('ERROR: even copying failed, please report')
-					except OSError as mods_move_err:
-						print('Problem with moving',mods_move_err.filename)
+							print(mods_copy_err)
+							print('ERROR: Copying failed, please report')
+						#except [Errno 28] No space left on device
 					if switch_writeMetaFiles:
-						if debug:
-							print('Writing meta file to', destination + '.meta')
-						with open (destination + '.meta','w') as meta_file:
-							meta_file.write('[General]\n')
-							#if comments are avaliable
-							if data[mod].get('comment') is True:
-								meta_file.write('comment=' + data[mod]['comment'] + '\n')
-							meta_file.write('modID=' + data[mod]['modID'] + '\n')
-							meta_file.write('name=' + data[mod]['name'] + '\n')
-							if switch_get_nexus_info:
-								if data[mod]['nexus_name'] != None and data[mod]['nexus_name'] != None:
-									meta_file.write('modName=' + data[mod]['nexus_name'] + '\n')
-									meta_file.write('category=' + data[mod]['nexus_categoryN'] + '\n')
-							#TODO revive that special version parsing?
-							meta_file.write('version=' + data[mod]['version'] + '\n')				
+						writeMetaFiles(mod_file_name)
 			else:
-				print('ERROR:',mod,'has different checksum')
+				print('ERROR:', mod_file_name, 'has different checksum')
+		else:
+			#TODO this prints which scanned file from directory is not in data
+			#it should do it the other way, it needs to be flipped
+			print('MOD', mod_file_name, 'is missing')
+			#TODO print missing link to download it
 
 
 if __name__ == "__main__":
 	#-----------------------------scan current dir------------------------------
-	#get mod_list - names of mod archives from directory target
-	mods_list = []
-	for item in os.listdir(target):
-		#skip meta files
-		if '.meta' in item:
-			continue
-		#skip directories
-		if os.path.isfile(os.path.join(target,item)):
-			mods_list.append(item)
+	mods_list = scan_dir(target)
 
 	#------------------------------- load json ---------------------------------
 	mods_data = try_load_json(modpack_json)
