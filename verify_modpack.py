@@ -1,7 +1,9 @@
-import os #for file operation
 import json #for input output
-import shutil #for copying if rename failes
 import hashlib #for make_checksum
+import os #for file operation
+import pyunpack #for mod unpack
+import shutil #for copying if rename failes
+
 """
 V0.0.1 - basic parsing, making dirs and writing summary
 V0.0.2 - implented asking for comment, skipping directories in scan, better {debug, printing, summary, making dirs}
@@ -34,11 +36,15 @@ TODOs:
 #Game = 'Fallout 4'
 #Game = 'Skyrim'
 debug = False
+test = True
 target = os.getcwd()
 modpack_json = 'modpack.json'
-MO_bin = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
+MO_downloads = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
+MO_mods = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\mods"
 switch_move_allowed = False
-switch_writeMetaFiles = True
+switch_writeMetaFiles = False
+if test:
+	MO_mods = r"c:\Users\pulec\git\BGames_tools\__TARGET"
 #----------------------------------- defs ------------------------------------
 
 
@@ -89,8 +95,9 @@ def try_load_json(json_file):
 		print('FAIL: File {0} does not exist in this folder'.format(json_file))
 		return False
 		exit(1)
-	except JSONDecodeError as e:
+	except json.JSONDecodeError as e:
 		print('FAIL: JSON Decode Error:\n  {0}'.format(e))
+		exit(2)
 		return False
 		
 
@@ -117,6 +124,32 @@ def verify_mods(mods, data):
 				meta_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n')
 			#TODO revive that special version parsing?
 			meta_file.write('version=' + data[mod_file_name]['version'] + '\n')				
+	
+	def copy_mods(source, destination):
+		try:
+			copy_main = shutil.copy(source, destination)
+			if destination == copy_main:
+				if debug:
+					print('Copy went OK!')
+		except OSError as mods_copy_err:
+			print(mods_copy_err)
+			print('ERROR: Copying failed, please report')
+		#TODO except [Errno 28] No space left on device
+	
+	def move_mods():
+		try:
+			os.rename(source, destination)
+		except PermissionError as creepy_hands_err:
+			print('Cant move file', creepy_hands_err.filename, 'some process is holding it\nTrying to copy')
+			copy_mods(source, destination)
+		except OSError as mods_move_err:
+			print('Problem with moving',mods_move_err.filename)
+			#TODO except [Errno 28] No space left on device
+		
+	def unpack_mod_to(source, target, auto_create_dir=True):
+		archive = pyunpack.Archive(source)
+		archive.extractall(target, auto_create_dir=auto_create_dir)
+		
 	for mod in mods:
 		mod_file_name = mod[mod.rfind('\\') + 1:]
 		if data.get(mod_file_name) is not None:
@@ -126,35 +159,26 @@ def verify_mods(mods, data):
 				#if the source file exists
 				source = mod
 				if os.path.exists(source) is True:
-					destination = os.path.join(os.getcwd(),MO_bin + '/' + mod_file_name)
-					destination_dir = os.path.join(os.getcwd(), MO_bin)
+					destination = os.path.join(os.getcwd(),MO_downloads + '/' + mod_file_name)
+					destination_dir = os.path.join(os.getcwd(), MO_downloads)
 					if not os.path.exists(destination_dir):
 						os.makedirs(destination_dir)
 					if debug:
 						print('Moving {0} to {1}'.format(source, destination))
 					if switch_move_allowed:
-						try:
-							os.rename(source, destination)
-						except PermissionError as creepy_hands_err:
-							print('Cant move file', creepy_hands_err.filename, 'some process is holding it\nTrying to copy')
-							try:
-								copy_out = shutil.copy(source, destination)
-								if destination == copy_out:
-									print('Copy went OK!')
-							except OSError as mods_try_copy_when_move_failed_err:
-								print('ERROR: even copying failed, please report')
-						except OSError as mods_move_err:
-							print('Problem with moving',mods_move_err.filename)
+						move_mods(source, destination)
 					else:
-						try:
-							copy_main = shutil.copy(source, destination)
-							if destination == copy_main:
-								if debug:
-									print('Copy went OK!')
-						except OSError as mods_copy_err:
-							print(mods_copy_err)
-							print('ERROR: Copying failed, please report')
-						#except [Errno 28] No space left on device
+						#if mod has no installer and correct order (no data dir) unpack it to mods folder
+						#check = ['has_data_dir', 'has_installer', 'game_data_in_folder']
+						if data[mod_file_name]["has_installer"]:
+							continue #skip mods with installers, or copy them...
+							#copy_mods(source, destination)
+						if not data[mod_file_name]['has_data_dir'] and not data[mod_file_name]['has_installer'] and not data[mod_file_name]['game_data_in_folder']:
+							mod_MO_name = data[mod_file_name]['modID'] + '-' + data[mod_file_name]['name']
+							unpack_mod_to(mod, MO_mods + '\\' + mod_MO_name)
+						else:
+							print('Handle',mod,'yourself')
+							#copy_mods(source, destination)
 					if switch_writeMetaFiles:
 						writeMetaFiles(mod_file_name)
 			else:
@@ -172,5 +196,5 @@ if __name__ == "__main__":
 	#------------------------------- load json ---------------------------------
 	mods_data = try_load_json(modpack_json)
 	#------------------------------- verify json ---------------------------------
-	print('Trying to verify and move mods defined in',modpack_json,'to',MO_bin)
+	print('Trying to verify and move mods defined in',modpack_json,'to',MO_downloads)
 	verify_mods(mods_list, mods_data)

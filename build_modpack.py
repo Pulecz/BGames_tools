@@ -284,9 +284,13 @@ def parse_nexus_mods(mods):
 			d[mod_file_name]['has_installer'] = patool_list_archives.Archive(mod)\
 								.search_for_file_in_archive(r'FOMod\\\\ModuleConfig.xml')
 			if not d[mod_file_name]['has_installer']: #if mod has a installer, we don't care about structure
+				#TODO probably do just data folder and then some smart check if everything is yet inside another folder
 				#otherwise we want to check if it has data\\ dir
 				d[mod_file_name]['has_data_dir'] = patool_list_archives.Archive(mod)\
 									.search_for_file_in_archive(r'^data\\')
+				#this will fail for files withouty any esp
+				d[mod_file_name]['game_data_in_folder'] = patool_list_archives.Archive(mod)\
+									.search_for_file_in_archive(r'^.*\\\\([\w\d\-\_]+\.esp)$')
 		#----------------------------- print info ------------------------------
 		if switch_get_nexus_info:
 			if version == 'N\A':
