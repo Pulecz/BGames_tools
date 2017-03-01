@@ -27,6 +27,7 @@ TODOs:
   - do a check first if the files is already copied, or check how shutil does it
   - calculate how much space the copy to MO_bin will take and if there is enough space
   - write plugins.txt, loadorder.txt, skyrim.ini to MO profile
+  - Write meta.ini to mod folder based just on the info from json
 """
 #-------------------------------------Input-------------------------------------
 #not used for now

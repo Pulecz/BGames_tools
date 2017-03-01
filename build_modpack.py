@@ -38,11 +38,20 @@ target = os.getcwd()
 modpack_json = 'modpack.json' #output
 switch_ask_for_description = False
 switch_ask_for_comment = False
+switch_determine_mod_install_type = True #patool needed
 switch_get_nexus_info = True
 if switch_get_nexus_info:
 	#skyrimgems search uses nexus_name from Nexus
 	#hence its not possible to do search without getting nexus info
 	switch_get_skyrimgems_desc = True
+	
+#patool is needed for getting installer type
+if switch_determine_mod_install_type:
+	try:
+		import patool_list_archives
+	except ValueError as patool_missing:
+		print(patool_missing)
+		exit(2)
 #----------------------------------- defs ------------------------------------
 
 
@@ -203,7 +212,7 @@ def parse_nexus_mods(mods):
 					#print the whole value of the key except the first mod_filename_list
 					##print(data[i][1:])
 					return i
-			
+					
 	d = {}
 	failed = []
 	re_nexus_id = r'\-(\d{3,})\-?' #- at least theree digits and optionaly -
@@ -247,27 +256,10 @@ def parse_nexus_mods(mods):
 		if switch_get_nexus_info:
 			(nexus_name, nexus_modCategoryN, nexus_modCategory) = get_nexus_info(nexus_id)
 			if nexus_name:
-				nexus_name = nexus_name.replace(game_link_replacer,'')			
+				nexus_name = nexus_name.replace(game_link_replacer,'')
 			else:
 				print('\nFailed to get info from nexusmods.com for {0}\n'.format(name))
 				nexus_name, nexus_modCategoryN, nexus_modCategory = None, None, None
-		#----------------------------- print info ------------------------------
-		if version == 'N\A':
-			print('\nValidated {0}\nName:{1}\nID:{2}'.format(mod_file_name, name, nexus_id))
-		else:
-			print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}'.format(mod_file_name, name, nexus_id, version))
-		if debug:
-			print('file_name:', name + '-' + nexus_id + '-' + version + extension)
-			print('real_file_name:', mod_file_name)
-			print('name:', name)
-			print('nexus_id:', nexus_id)
-			print('version:', version)
-			print('extension:', extension)
-			print('Is file_name correct? ', os.path.exists(mod))
-			if switch_get_nexus_info:
-				print('mod_name:', nexus_name)
-				print('nexus_modCategoryN:', nexus_modCategoryN)
-				print('nexus_modCategory:', nexus_modCategory)
 		#------------------------------ save info ------------------------------
 		d[mod_file_name] = {}
 		d[mod_file_name]['name'] = name
@@ -287,6 +279,37 @@ def parse_nexus_mods(mods):
 			d[mod_file_name]['description'] = input('Insert your description: ')
 		if switch_ask_for_comment:
 			d[mod_file_name]['comment'] = input('Insert your comment: ')
+		if switch_determine_mod_install_type:
+			#check if mod has FOmod\\ModuleConfig.xml - installer
+			d[mod_file_name]['has_installer'] = patool_list_archives.Archive(mod)\
+								.search_for_file_in_archive(r'FOMod\\\\ModuleConfig.xml')
+			if not d[mod_file_name]['has_installer']: #if mod has a installer, we don't care about structure
+				#otherwise we want to check if it has data\\ dir
+				d[mod_file_name]['has_data_dir'] = patool_list_archives.Archive(mod)\
+									.search_for_file_in_archive(r'^data\\')
+		#----------------------------- print info ------------------------------
+		if switch_get_nexus_info:
+			if version == 'N\A':
+				print('\nValidated {0}\nName:{1}\nID:{2}\nCategory:{3}'.format(mod_file_name, name, nexus_id, nexus_modCategory))
+			else:
+				print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}\nCategory:{4}'.format(mod_file_name, name, nexus_id, version, nexus_modCategory))
+		else:
+			if version == 'N\A':
+				print('\nValidated {0}\nName:{1}\nID:{2}'.format(mod_file_name, name, nexus_id))
+			else:
+				print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}'.format(mod_file_name, name, nexus_id, version))
+		if debug:
+			print('file_name:', mod_file_name)
+			print('file_name exists?', os.path.exists(mod))
+			print('name:', name)
+			print('nexus_id:', nexus_id)
+			print('version:', version)
+			print('extension:', extension)
+			print('constructed_file_name:', name + '-' + nexus_id + '-' + version + extension)
+			if switch_get_nexus_info:
+				print('nexus_name:', nexus_name)
+				print('nexus_categoryN:', nexus_modCategoryN)
+				print('nexus_category:', nexus_modCategory)
 	#--------------------------------finalize-----------------------------------
 	if debug:
 		print('These mods failed to get parsed:', failed)
