@@ -29,54 +29,33 @@ TODOs:
   - write plugins.txt, loadorder.txt, skyrim.ini to MO profile
 """
 #-------------------------------------Input-------------------------------------
+#not used for now
 #Game = 'Fallout 4'
-Game = 'Skyrim'
+#Game = 'Skyrim'
 debug = False
 target = os.getcwd()
-
-#get
-switch_ask_for_description = False
-switch_ask_for_comment = False
-switch_get_nexus_info = True
-if switch_get_nexus_info:
-	switch_get_skyrimgems_desc = True #it uses nexus_name from Nexus
-	
-#set
+modpack_json = 'modpack.json'
+MO_bin = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
 switch_move_allowed = False
 switch_writeMetaFiles = True
-MO_bin = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
-modpack_json = 'modpack.json'
-
-#validate_input
-if Game == 'Fallout 4':
-	game_link = 'fallout4'
-	game_link_replacer = ' at ' + Game + ' Nexus - Mods and community'
-	switch_get_skyrimgems_desc = False
-elif Game == 'Skyrim':
-	game_link = 'skyrim'
-	game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
-else:
-	print('Game {0} is not recognized as a valid option.\nHit any key to exit.'.format(Game))
-	input()
-	exit()
-
 #----------------------------------- defs ------------------------------------
 
 
 def scan_dir(target):
 	"""
-	gets names of mod archives from directory target
+	scans directory recursively
+	returns file_list, which are paths to the files
 	"""
-	mods_list = []
+	file_list = []
+	blacklist = ['.meta', 'mod.info']
 	for root, dirs, files in os.walk(target):
 		for file in files:
-			if '.meta' in file:
+			if any(blacklist_item in file for blacklist_item in blacklist):
 				continue
-			if 'mod.info' in file:
-				continue
-			mods_list.append(os.path.join(root, file))
-	return mods_list
+			file_list.append(os.path.join(root, file))
+	return file_list
 
+	
 def make_checksum(mod_file, chunk_size=1024):
 	"""
 	Make checksum in sha1 for big files
@@ -132,10 +111,9 @@ def verify_mods(mods, data):
 				meta_file.write('comment=' + data[mod_file_name]['comment'] + '\n')
 			meta_file.write('modID=' + data[mod_file_name]['modID'] + '\n')
 			meta_file.write('name=' + data[mod_file_name]['name'] + '\n')
-			if switch_get_nexus_info:
-				if data[mod_file_name]['nexus_name'] != None and data[mod_file_name]['nexus_name'] != None:
-					meta_file.write('modName=' + data[mod_file_name]['nexus_name'] + '\n')
-					meta_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n')
+			if data[mod_file_name]['nexus_name'] != None and data[mod_file_name]['nexus_name'] != None:
+				meta_file.write('modName=' + data[mod_file_name]['nexus_name'] + '\n')
+				meta_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n')
 			#TODO revive that special version parsing?
 			meta_file.write('version=' + data[mod_file_name]['version'] + '\n')				
 	for mod in mods:
@@ -190,10 +168,8 @@ def verify_mods(mods, data):
 if __name__ == "__main__":
 	#-----------------------------scan current dir------------------------------
 	mods_list = scan_dir(target)
-
 	#------------------------------- load json ---------------------------------
 	mods_data = try_load_json(modpack_json)
-
 	#------------------------------- verify json ---------------------------------
 	print('Trying to verify and move mods defined in',modpack_json,'to',MO_bin)
 	verify_mods(mods_list, mods_data)

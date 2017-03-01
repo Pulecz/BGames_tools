@@ -1,4 +1,4 @@
-import re, os # parsing, scaning
+import re, os #parsing, scaning
 import json #for input output
 import hashlib #for make_checksum
 from urllib.request import urlopen # for web_parsing
@@ -23,7 +23,7 @@ Currently setup for **Skyrim**, for **Fallout 4** support change Game var in Inp
 Script will scan the current directory (where the script is launched) (or change that in variable target), excluding folders and *.meta files.
 
 TODOs
-	hashlib checksums
+	when regex fails, try doing more strick check for IDS 01-99 or just verify files for those
 	meta files for ModOrganizer loading?
 	getting categories from Nexus does not work for adult content, but it works for title, fix it!
 		add another option to get categories
@@ -35,64 +35,57 @@ TODOs
 Game = 'Skyrim'
 debug = False
 target = os.getcwd()
-
-#get
+modpack_json = 'modpack.json' #output
 switch_ask_for_description = False
 switch_ask_for_comment = False
 switch_get_nexus_info = True
 if switch_get_nexus_info:
-	switch_get_skyrimgems_desc = True #it uses nexus_name from Nexus
-	
-#set
-switch_writeMetaFiles = True
-MO_bin = 'for_MO'
-modpack_json = 'modpack.json'
-
-#validate_input
-if Game == 'Fallout 4':
-	game_link = 'fallout4'
-	game_link_replacer = ' at ' + Game + ' Nexus - Mods and community'
-	switch_get_skyrimgems_desc = False
-elif Game == 'Skyrim':
-	game_link = 'skyrim'
-	game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
-else:
-	print('Game {0} is not recognized as a valid option.\nHit any key to exit.'.format(Game))
-	input()
-	exit()
-
+	#skyrimgems search uses nexus_name from Nexus
+	#hence its not possible to do search without getting nexus info
+	switch_get_skyrimgems_desc = True
 #----------------------------------- defs ------------------------------------
+
+
+def validate_input():
+	"""
+	validates input and returns:
+	game_link and game_link_replacer
+	"""
+	def nexus_title_replace():
+		"""return string used for replacing mod page titles"""
+		game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
+		return game_link_replacer
+	
+	#for FO4 no skyrimgems possible, set it global so the variable change is done
+	global switch_get_skyrimgems_desc
+	if Game == 'Fallout 4':
+		game_link = 'fallout4'
+		switch_get_skyrimgems_desc = False
+	elif Game == 'Skyrim':
+		game_link = 'skyrim'
+	else:
+		print('Game {0} is not recognized as a valid option.\nHit any key to exit.'.format(Game))
+		input()
+		exit(1)
+	game_link_replacer = nexus_title_replace()
+	return (game_link, game_link_replacer)
 
 
 def scan_dir(target):
 	"""
-	gets names of mod archives from directory target
+	scans directory recursively
+	returns file_list, which are paths to the files
 	"""
-	mods_list = []
+	file_list = []
+	blacklist = ['build_modpack.py','.meta', 'mod.info']
 	for root, dirs, files in os.walk(target):
 		for file in files:
-			if '.meta' in file:
+			if any(blacklist_item in file for blacklist_item in blacklist):
 				continue
-			if 'mod.info' in file:
-				continue
-			mods_list.append(os.path.join(root, file))
-	return mods_list
+			file_list.append(os.path.join(root, file))
+	return file_list
 
-	
-def get_skyrimgems_source():
-	"""
-	Retrieves html source from skyrimgems
-	Used later for getting descriptions for the mods
-	"""
-	try: # handle if url is not reachable error
-		foo = urlopen('http://www.skyrimgems.com')
-	except ValueError as url_e:
-		print(url_e)
-		return None
-	skyrimgems_source = foo.read().decode('cp852')# this just works
-	return skyrimgems_source
-
-	
+		
 def make_checksum(mod_file, chunk_size=1024):
 	"""
 	Make checksum in sha1 for big files
@@ -153,6 +146,19 @@ def parse_nexus_mods(mods):
 				\nPlease get nexus_name and its categories yourself.\n'.format(url))
 			return (None,None,None)
 
+	def get_skyrimgems_source():
+		"""
+		Retrieves html source from skyrimgems
+		Used later for getting descriptions for the mods
+		"""
+		try: # handle if url is not reachable error
+			foo = urlopen('http://www.skyrimgems.com')
+		except ValueError as url_e:
+			print(url_e)
+			return None
+		skyrimgems_source = foo.read().decode('cp852')# this just works
+		return skyrimgems_source		
+	
 	def search_skyrimgems_source(nexus_name): #TODO needs some filtering
 		"""
 		tries to match mod description with this crazy regex and then tries to do some filtering
@@ -175,10 +181,33 @@ def parse_nexus_mods(mods):
 		fetch.replace('[<span class=\"SKSE\">SKSE</span>]','[SKSE]')
 		return fetch
 	
-	
+	def load_bellow_id_100_data(json_file):
+		"""
+		load jsons file, should be called only once
+		"""
+		with open(json_file, 'r') as f:
+			data = f.read()
+			json_data = json.loads(data)
+		return json_data
+				
+	def search_in_bellow_id_100_data(target, data):
+		"""
+		goes through data, which are specific structure
+		for nexus ids bellow 100
+		
+		returns id of the mod(the key of data)
+		"""
+		for i in data.keys():
+			if not data[i][0] == None:
+				if any(target in file_name for file_name in data[i][0]):
+					#print the whole value of the key except the first mod_filename_list
+					##print(data[i][1:])
+					return i
+			
 	d = {}
 	failed = []
 	re_nexus_id = r'\-(\d{3,})\-?' #- at least theree digits and optionaly -
+	bellow_id_100_data = None #load only if something fails regex
 
 	#if geting info from Skyrim GEMS, load the page source
 	if switch_get_nexus_info and switch_get_skyrimgems_desc:
@@ -192,9 +221,16 @@ def parse_nexus_mods(mods):
 		try:
 			nexus_id = re.search(re_nexus_id, mod_file_name).group(1)
 		except AttributeError as re_error_nexus_id:
-			print('\nERROR: For item "{0}" regex failed, skipping\n'.format(mod_file_name))
-			failed.append(mod)
-			continue
+			print('\nWARNING: Item "{0}" has probably ID bellow 100, trying to check for ids...\n'.format(mod_file_name))
+			#try looking if the file_name has nexus_id bellow 100
+			if not bellow_id_100_data:
+				bellow_id_100_data = load_bellow_id_100_data('skyrim_99ids.json')
+			nexus_id = search_in_bellow_id_100_data(mod_file_name, bellow_id_100_data)
+			#if failed then skip, the file is surely not for nexus
+			if not nexus_id:
+				print('\nERROR: For item "{0}" regex failed, skipping\n'.format(mod_file_name))
+				failed.append(mod_file_name)
+				continue
 		re_name_version = re.compile('(.*)-' + nexus_id + '-?(.*)' + extension)
 		if debug:
 			print('Using re {0} on {1}'.format(re_name_version.pattern, mod_file_name))
@@ -211,7 +247,7 @@ def parse_nexus_mods(mods):
 		if switch_get_nexus_info:
 			(nexus_name, nexus_modCategoryN, nexus_modCategory) = get_nexus_info(nexus_id)
 			if nexus_name:
-				nexus_name = nexus_name.replace(game_link_replacer,'')
+				nexus_name = nexus_name.replace(game_link_replacer,'')			
 			else:
 				print('\nFailed to get info from nexusmods.com for {0}\n'.format(name))
 				nexus_name, nexus_modCategoryN, nexus_modCategory = None, None, None
@@ -269,15 +305,15 @@ def try_save_json(json_file, data):
 		print('FAIL: Windows happened:\n  {0}'.format(e))
 		return False
 
-
+		
+#-----------------------------------------------------------------------------
 if __name__ == "__main__":
+	game_link, game_link_replacer = validate_input() #exit if not OK
 	#-----------------------------scan current dir------------------------------
 	mods_list = scan_dir(target)
-
 	#-------------------------------- get info ---------------------------------
 	print('Building modpack from all mod files in', target)
 	mods_data = parse_nexus_mods(mods_list)
-
 	#------------------------------- save json ---------------------------------
 	if len(mods_data) != 0: #some mod found
 		try_save_json(modpack_json, mods_data)
