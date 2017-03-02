@@ -90,59 +90,69 @@ class Archive(object):
 		return str(p.stdout).split('\\r\\n')
 
 		
-	def search_for_file_in_archive(self, pattern):
+	def get_archive_content(self):
 		"""
-		call list_archive and search if filename is in archive
-		returns True or False
+		calls self.list_archive() and gets just
+		the contents from list_archive
+
+		returns list, each file on its own line
 		"""
-		def get_content_from_stdout(stdout_list):
-			"""
-			get just the contents from list_archive		
-			returns list, each file on its own line
-			"""
-			#find begining of the content
-			for ln, lstr in enumerate(stdout_list):
-				if 'Date' in lstr and 'Time' in lstr:
-					content_start = ln+2
-					break
-			#find end of the content from reversed list
-			for ln, lstr in enumerate(stdout_list[::-1]):
-				if '-------------------' in lstr:
-					content_end = ln+1
-					break
-			#reverse content_end index for stdout_list index
-			content_end = len(stdout_list) - content_end
-			content = stdout_list[content_start:content_end]
-			return content
-			
-	
-		def search_for_file_in_content(pattern, content):
-			"""
-			search for filename in content
+		stdout_list = self.list_archive()
+		result = {}
+		#find begining of the content
+		for ln, lstr in enumerate(stdout_list):
+			if 'Date' in lstr and 'Time' in lstr:
+				content_start = ln+2
+				break
+		#find end of the content from reversed list
+		for ln, lstr in enumerate(stdout_list[::-1]):
+			if '-------------------' in lstr:
+				content_end = ln+1
+				break
+		#reverse content_end index for stdout_list index
+		content_end = len(stdout_list) - content_end
+		content = stdout_list[content_start:content_end]
+		#filter it more
+		content_re = r'^(\d{4}\-\d+\-\d+)\s+(\d+\:\d+\:\d+)\s+(.{5})\s+(\d+)?\s+(\d+)?\s+(.*)$'
+		for index, line in enumerate(content):
+			line_attributes = re.match(content_re, line)
+			if line_attributes:
+				#TODO maybe just do line_attributes.groups()
+				date = line_attributes.group(1)
+				time = line_attributes.group(2)
+				attr = line_attributes.group(3)
+				size = line_attributes.group(4)
+				compressed_size = line_attributes.group(5)
+				filename = line_attributes.group(6)
+			else:
+				print('ERROR: failed to match', line)
+				input('Please report this line\nPress any key to continue')
+				continue
+			result[index] = [date, time, attr, size, compressed_size, filename]
+		return result
+
+
+	def search_for_file_in_archive(self, pattern, match=False):
+		"""
+		calls get content and search if filename is in archive
+		if match is False
+			search for filename in content by re.search
 			pattern is regular re, always used with re.IGNORECASE
-			content_re will extract groups
-			0 - all
-			1 - Date
-			2 - Time
-			3 - Attr
-			4 - Size
-			5 - Compressed (size)
-			6 - Name
-			"""
-			content_re = r'^(\d{4}\-\d+\-\d+)\s+(\d+\:\d+\:\d+)\s+(.{5})\s+(\d+)?\s+(\d+)?\s+(.*)$'
-			for line in content:
-				line_attributes = re.match(content_re, line)
-				if line_attributes:
-					filename = line_attributes.group(6)
-				else:
-					print('ERROR: failed to match', line)
-					input('Please report this line\nPress any key to continue')
-					continue
-				found = re.search(pattern, filename.lower(), re.IGNORECASE)
+			returns True or False
+		if match is True
+			if pattern matched returns match object
+		TODO maybe move elsehwere? its riddled with re
+		"""
+		content = self.get_archive_content()
+		for index in content:
+			line = content[index]
+			filename = line[5]
+			if match:
+				dig = re.match(pattern, filename, re.IGNORECASE)
+				if dig:
+					return dig
+			else:
+				found = re.search(pattern, filename, re.IGNORECASE)
 				if found:
 					return True
-			return False
-
-		
-		content = get_content_from_stdout(self.list_archive())
-		return search_for_file_in_content(pattern, content)
+		return False

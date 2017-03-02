@@ -3,7 +3,11 @@ import hashlib #for make_checksum
 import os #for file operation
 import pyunpack #for mod unpack
 import shutil #for copying if rename failes
-
+try:
+	import patool_list_archives
+except ValueError as patool_missing:
+	print(patool_missing)
+	exit(88)
 """
 V0.0.1 - basic parsing, making dirs and writing summary
 V0.0.2 - implented asking for comment, skipping directories in scan, better {debug, printing, summary, making dirs}
@@ -146,9 +150,61 @@ def verify_mods(mods, data):
 			print('Problem with moving',mods_move_err.filename)
 			#TODO except [Errno 28] No space left on device
 		
-	def unpack_mod_to(source, target, auto_create_dir=True):
-		archive = pyunpack.Archive(source)
-		archive.extractall(target, auto_create_dir=auto_create_dir)
+	def verify_and_unpack_mod_to(mod, target, auto_create_dir=True):
+		#TODO HOHOHO, reinvent the wheel here
+		"""rules are:
+
+		rules are done in big OR, nobody cares about big AND, yet
+
+		on root folder - dict(root_folder_whitelist)
+
+			double-check:
+				mods with dirs optionals
+				blacklist: images, why omg?? (iWASM V 1-51087-1-0)
+
+				mods:
+				main menu wallpaper replacer HD 1080p now with randomizer **mainmenuwallpapers**
+				FamiliarFaces_1.1.5-54509-1-1-5 **vMYC**
+				Option C-6594.7z - top_dir is too long
+				Enhanced AI Framework-73912-2-5 - data scripts weirdly	
+		"""
+
+		root_folder_whitelist = {
+				"dirs": ["Interface", "Meshes", "Seq", "Sound", "Textures", "Scripts", "SKSE", "SkyProc Patchers", "Video"],
+				"docs": [".docx"],
+				"docs_dirs": ["docs", "fomod", "readme", "readmes"],
+				"files": [".esm", ".esp", ".bsa", ".bsl"]
+			}
+
+		#patool_list_archives stuff
+		def do_list_search(re,match = False):
+			return patool_list_archives.Archive(mod).search_for_file_in_archive(re, match)
+		#bad
+		re_main_dirs_files = r'[\\]+((Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)|[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+$)'
+		#re_data_dir = r'([\\]+)?data' + re_main_dirs_files #search for data
+		re_match_dir = r'^(.*)' + re_main_dirs_files #.* is the wanted group
+		#good
+		re_has_files = '(^[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+)$'
+		re_allowed_dirs = r'^(Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)'
+		#re_has_files_anywhere = r'(^.*\\)?([\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+)$'
+		match_dir = do_list_search(re_match_dir, match = True)
+		if match_dir:
+			top_dir = match_dir.group(1)
+			if debug:
+				print('top_dir is:', top_dir)
+			if 'data' in top_dir.lower():
+				print('BAD:this mod has a data folder')
+				print('extract it, start from data folder and then move')
+			if do_list_search(r'^' + top_dir.replace('\\\\','[\\]+').replace('\\','') + re_main_dirs_files): #maybe you are doing this twice
+				print('in archive and',top_dir,'files seems ok')
+		#if do_list_search(re_data_dir):
+		if do_list_search(re_has_files):
+			print('GOOD:this mod has esp on root folder')
+		if do_list_search(re_allowed_dirs):
+			print('GOOD:allowed dirs on root folder')
+
+		#archive = pyunpack.Archive(mod)
+		#archive.extractall(target, auto_create_dir=auto_create_dir)
 		
 	for mod in mods:
 		mod_file_name = mod[mod.rfind('\\') + 1:]
@@ -171,14 +227,12 @@ def verify_mods(mods, data):
 						#if mod has no installer and correct order (no data dir) unpack it to mods folder
 						#check = ['has_data_dir', 'has_installer', 'game_data_in_folder']
 						if data[mod_file_name]["has_installer"]:
-							continue #skip mods with installers, or copy them...
-							#copy_mods(source, destination)
-						if not data[mod_file_name]['has_data_dir'] and not data[mod_file_name]['has_installer'] and not data[mod_file_name]['game_data_in_folder']:
-							mod_MO_name = data[mod_file_name]['modID'] + '-' + data[mod_file_name]['name']
-							unpack_mod_to(mod, MO_mods + '\\' + mod_MO_name)
-						else:
 							print('Handle',mod,'yourself')
+							#copy mods with installers
 							#copy_mods(source, destination)
+							continue
+						mod_MO_name = data[mod_file_name]['modID'] + '-' + data[mod_file_name]['name']
+						verify_and_unpack_mod_to(mod, MO_mods + '\\' + mod_MO_name)
 					if switch_writeMetaFiles:
 						writeMetaFiles(mod_file_name)
 			else:
