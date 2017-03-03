@@ -3,6 +3,7 @@ import hashlib #for make_checksum
 import os #for file operation
 import pyunpack #for mod unpack
 import shutil #for copying if rename failes
+import tempfile #for unpacking "dirty" mods
 try:
 	import patool_list_archives
 except ValueError as patool_missing:
@@ -111,7 +112,7 @@ def verify_mods(mods, data):
 	mod is full path
 	mod_file_name is just file_name, used as keys in json data
 	"""
-	#def transfer(source, target):
+	#def transfer(mod, target):
 	
 	def writeMetaFiles(mod_file_name):
 		if debug:
@@ -165,7 +166,9 @@ def verify_mods(mods, data):
 				mods:
 				main menu wallpaper replacer HD 1080p now with randomizer **mainmenuwallpapers**
 				FamiliarFaces_1.1.5-54509-1-1-5 **vMYC**
-				Option C-6594.7z - top_dir is too long
+				Option C-6594.7z - topdir is Lockpick graduation by Lilyu option C 1.0\\textures\ - remove textures
+				INI settings-51038-1-1.rar - catches topdir after SKSE, bad!
+				FSS - Better Bards-6496-1-0.rar - completely broken, topdir is sounds\voice
 				Enhanced AI Framework-73912-2-5 - data scripts weirdly	
 		"""
 
@@ -179,14 +182,25 @@ def verify_mods(mods, data):
 		#patool_list_archives stuff
 		def do_list_search(re,match = False):
 			return patool_list_archives.Archive(mod).search_for_file_in_archive(re, match)
+
+		def write_meta_ini():
+			"""check Horns Are Forever-20861-1-0.7z, it has its own meta.ini!"""
+			pass
+
+
+		tmp_dir = tempfile.TemporaryDirectory(suffix='modpack_unpack')
+
 		#bad
 		re_main_dirs_files = r'[\\]+((Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)|[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+$)'
 		#re_data_dir = r'([\\]+)?data' + re_main_dirs_files #search for data
 		re_match_dir = r'^(.*)' + re_main_dirs_files #.* is the wanted group
+
 		#good
 		re_has_files = '(^[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+)$'
 		re_allowed_dirs = r'^(Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)'
 		#re_has_files_anywhere = r'(^.*\\)?([\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+)$'
+
+
 		match_dir = do_list_search(re_match_dir, match = True)
 		if match_dir:
 			top_dir = match_dir.group(1)
@@ -195,44 +209,61 @@ def verify_mods(mods, data):
 			if 'data' in top_dir.lower():
 				print('BAD:this mod has a data folder')
 				print('extract it, start from data folder and then move')
+			#try if applying topdir will be enough
 			if do_list_search(r'^' + top_dir.replace('\\\\','[\\]+').replace('\\','') + re_main_dirs_files): #maybe you are doing this twice
-				print('in archive and',top_dir,'files seems ok')
-		#if do_list_search(re_data_dir):
+				print('GOOD:in archive everything starting from', top_dir, 'up seems ok')
+				archive = pyunpack.Archive(mod)
+				archive.extractall(tmp_dir.name, auto_create_dir=auto_create_dir)
+				print('now I would use', tmp_dir.name + r'\\' + top_dir, 'and extract next')
+				try:
+					#TODO again bug when folder already exists
+					shutil.move(tmp_dir.name + r'\\' + top_dir, target)
+				except PermissionError as pe_move:
+					print("FAIL: Couldn't move file: {0}| WTF?"
+					.format(pe_move.filename))
+				return target+r'\\'+top_dir
+		#maybe this should be tested first?
 		if do_list_search(re_has_files):
 			print('GOOD:this mod has esp on root folder')
-		if do_list_search(re_allowed_dirs):
+			archive = pyunpack.Archive(mod)
+			archive.extractall(target, auto_create_dir=auto_create_dir)
+		elif do_list_search(re_allowed_dirs):
 			print('GOOD:allowed dirs on root folder')
+			archive = pyunpack.Archive(mod)
+			archive.extractall(target, auto_create_dir=auto_create_dir)
 
-		#archive = pyunpack.Archive(mod)
-		#archive.extractall(target, auto_create_dir=auto_create_dir)
+		#all done cleanup
+		try:
+			tmp_dir.cleanup()
+		except PermissionError as pe_clean:
+			print("WARNING: Can't remove file: {0}|Please clean it up manually"
+			.format(pe_clean.filename))
 		
 	for mod in mods:
 		mod_file_name = mod[mod.rfind('\\') + 1:]
+		if test:
+			input('handling ' + mod_file_name)
 		if data.get(mod_file_name) is not None:
 			mod_checksum = make_checksum(mod)
 			if mod_checksum == data[mod_file_name]['sha1']:
 				print('[OK]',mod_file_name)
 				#if the source file exists
-				source = mod
-				if os.path.exists(source) is True:
-					destination = os.path.join(os.getcwd(),MO_downloads + '/' + mod_file_name)
-					destination_dir = os.path.join(os.getcwd(), MO_downloads)
-					if not os.path.exists(destination_dir):
-						os.makedirs(destination_dir)
+				if os.path.exists(mod) is True:
+					#rather move dir_create elsweyr
+					#destination = os.path.join(os.getcwd(),MO_downloads + '/' + mod_file_name)
+					#destination_dir = os.path.join(os.getcwd(), MO_downloads)
+					#if not os.path.exists(destination_dir):
+					#	os.makedirs(destination_dir)
 					if debug:
-						print('Moving {0} to {1}'.format(source, destination))
-					if switch_move_allowed:
-						move_mods(source, destination)
-					else:
-						#if mod has no installer and correct order (no data dir) unpack it to mods folder
-						#check = ['has_data_dir', 'has_installer', 'game_data_in_folder']
-						if data[mod_file_name]["has_installer"]:
-							print('Handle',mod,'yourself')
-							#copy mods with installers
-							#copy_mods(source, destination)
-							continue
-						mod_MO_name = data[mod_file_name]['modID'] + '-' + data[mod_file_name]['name']
-						verify_and_unpack_mod_to(mod, MO_mods + '\\' + mod_MO_name)
+						print('Moving {0} to {1}'.format(mod, destination))
+					#check mod has installer, then copy it to dl folder
+					if data[mod_file_name]["has_installer"]:
+						print('Handle',mod,'yourself')
+						copy_mods(mod, MO_downloads + '/' + mod_file_name)
+						continue
+					#if mod has no installer and correct order (no data dir) unpack it to mods folder
+					mod_MO_name = data[mod_file_name]['modID'] + '-' + data[mod_file_name]['name']
+					verify_and_unpack_mod_to(mod, MO_mods + r'\\' + mod_MO_name)
 					if switch_writeMetaFiles:
 						writeMetaFiles(mod_file_name)
 			else:
