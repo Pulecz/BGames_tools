@@ -283,27 +283,17 @@ def parse_nexus_mods(mods):
 			#check if mod has FOmod\\ModuleConfig.xml - installer
 			d[mod_file_name]['has_installer'] = patool_list_archives.Archive(mod)\
 								.search_for_file_in_archive(r'FOMod\\\\ModuleConfig.xml')
-			if not d[mod_file_name]['has_installer']: #if mod has a installer, we don't care about structure
-				pass
-				def skip():
-					#TODO probably do just data folder and then some smart check if everything is yet inside another folder
-					#otherwise we want to check if it has data\\ dir
-					d[mod_file_name]['has_data_dir'] = patool_list_archives.Archive(mod)\
-										.search_for_file_in_archive(r'^data\\')
-					#this will fail for files withouty any esp
-					d[mod_file_name]['has_esp'] = patool_list_archives.Archive(mod)\
-										.search_for_file_in_archive(r'^.*\\\\([\w\d\-\_\s]+\.esp)$')
 		#----------------------------- print info ------------------------------
 		if switch_get_nexus_info:
 			if version == 'N\A':
-				print('\nValidated {0}\nName:{1}\nID:{2}\nCategory:{3}'.format(mod_file_name, name, nexus_id, nexus_modCategory))
+				print('\nValidated {0}\nName:{1}\nID:{2}\nCategory:{3}\nInstaller:{4}'.format(mod_file_name, name, nexus_id, nexus_modCategory, d[mod_file_name]['has_installer']))
 			else:
-				print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}\nCategory:{4}'.format(mod_file_name, name, nexus_id, version, nexus_modCategory))
+				print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}\nCategory:{4}\nInstaller:{5}'.format(mod_file_name, name, nexus_id, version, nexus_modCategory, d[mod_file_name]['has_installer']))
 		else:
 			if version == 'N\A':
-				print('\nValidated {0}\nName:{1}\nID:{2}'.format(mod_file_name, name, nexus_id))
+				print('\nValidated {0}\nName:{1}\nID:{2}\nInstaller:{3}'.format(mod_file_name, name, nexus_id, d[mod_file_name]['has_installer']))
 			else:
-				print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}'.format(mod_file_name, name, nexus_id, version))
+				print('\nValidated {0}\nName:{1}\nID:{2}\nV:{3}\nInstaller:{4}'.format(mod_file_name, name, nexus_id, version, d[mod_file_name]['has_installer']))
 		if debug:
 			print('file_name:', mod_file_name)
 			print('file_name exists?', os.path.exists(mod))

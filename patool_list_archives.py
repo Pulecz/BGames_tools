@@ -54,11 +54,50 @@ class Archive(object):
 		self.patool_path = patool_path
 
 		
-	def list_archive(self):
+	def list_archive(self, only_files=False):
 		"""
 		run patool with list parameter
 		returns stdout as a list for each line
 		"""
+		def get_only_file_lines(stdout_list):
+			"""
+			calls self.list_archive() and gets just
+			the contents from list_archive
+
+			returns list, each file on its own line
+			"""
+			result = []
+			#find begining of the content
+			for ln, lstr in enumerate(stdout_list):
+				if 'Date' in lstr and 'Time' in lstr:
+					content_start = ln+2
+					break
+			#find end of the content from reversed list
+			for ln, lstr in enumerate(stdout_list[::-1]):
+				if '-------------------' in lstr:
+					content_end = ln+1
+					break
+			#reverse content_end index for stdout_list index
+			content_end = len(stdout_list) - content_end
+			content = stdout_list[content_start:content_end]
+			#filter it more
+			content_re = r'^(\d{4}\-\d+\-\d+)\s+(\d+\:\d+\:\d+)\s+(.{5})\s+(\d+)?\s+(\d+)?\s+(.*)$'
+			for index, line in enumerate(content):
+				line_attributes = re.match(content_re, line)
+				if line_attributes:
+					#TODO maybe just do line_attributes.groups()
+					date = line_attributes.group(1)
+					time = line_attributes.group(2)
+					attr = line_attributes.group(3)
+					size = line_attributes.group(4)
+					compressed_size = line_attributes.group(5)
+					filename = line_attributes.group(6)
+				else:
+					print('ERROR: failed to match', line)
+					input('Please report this line\nPress any key to continue')
+					continue
+				result.append([date, time, attr, size, compressed_size, filename])
+			return result
 		p = subprocess.run([
 			sys.executable,
 			self.patool_path,
@@ -68,7 +107,12 @@ class Archive(object):
 		], stdout=subprocess.PIPE, stderr = subprocess.PIPE)
 		#if p.return_code:
 		#	raise PatoolError('patool can not unpack\n' + str(p.stderr))
-		return str(p.stdout).split('\\r\\n')
+		#bytes to str
+		stdout_list = str(p.stdout).split('\\r\\n')
+		if only_files:
+			return get_only_file_lines(stdout_list)
+		else:
+			return stdout_list
 
 		
 	def search_archive(self, pattern):
@@ -88,50 +132,7 @@ class Archive(object):
 		#if p.timeout_happened:
 		#	raise PatoolError('patool timeout\n' + str(p.stdout) + '\n' + str(p.stderr))
 		return str(p.stdout).split('\\r\\n')
-
 		
-	def get_archive_content(self):
-		"""
-		calls self.list_archive() and gets just
-		the contents from list_archive
-
-		returns list, each file on its own line
-		"""
-		stdout_list = self.list_archive()
-		result = {}
-		#find begining of the content
-		for ln, lstr in enumerate(stdout_list):
-			if 'Date' in lstr and 'Time' in lstr:
-				content_start = ln+2
-				break
-		#find end of the content from reversed list
-		for ln, lstr in enumerate(stdout_list[::-1]):
-			if '-------------------' in lstr:
-				content_end = ln+1
-				break
-		#reverse content_end index for stdout_list index
-		content_end = len(stdout_list) - content_end
-		content = stdout_list[content_start:content_end]
-		#filter it more
-		content_re = r'^(\d{4}\-\d+\-\d+)\s+(\d+\:\d+\:\d+)\s+(.{5})\s+(\d+)?\s+(\d+)?\s+(.*)$'
-		for index, line in enumerate(content):
-			line_attributes = re.match(content_re, line)
-			if line_attributes:
-				#TODO maybe just do line_attributes.groups()
-				date = line_attributes.group(1)
-				time = line_attributes.group(2)
-				attr = line_attributes.group(3)
-				size = line_attributes.group(4)
-				compressed_size = line_attributes.group(5)
-				filename = line_attributes.group(6)
-			else:
-				print('ERROR: failed to match', line)
-				input('Please report this line\nPress any key to continue')
-				continue
-			result[index] = [date, time, attr, size, compressed_size, filename]
-		return result
-
-
 	def search_for_file_in_archive(self, pattern, match=False):
 		"""
 		calls get content and search if filename is in archive
@@ -143,9 +144,8 @@ class Archive(object):
 			if pattern matched returns match object
 		TODO maybe move elsehwere? its riddled with re
 		"""
-		content = self.get_archive_content()
-		for index in content:
-			line = content[index]
+		content = self.list_archive(only_files=True)
+		for line in content:
 			filename = line[5]
 			if match:
 				dig = re.match(pattern, filename, re.IGNORECASE)
@@ -156,3 +156,4 @@ class Archive(object):
 				if found:
 					return True
 		return False
+		

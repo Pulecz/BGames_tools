@@ -2,6 +2,7 @@ import json #for input output
 import hashlib #for make_checksum
 import os #for file operation
 import pyunpack #for mod unpack
+import re #for do_list_search
 import shutil #for copying if rename failes
 import tempfile #for unpacking "dirty" mods
 try:
@@ -41,11 +42,12 @@ TODOs:
 #Game = 'Fallout 4'
 #Game = 'Skyrim'
 debug = False
-test = True
+test = False
 target = os.getcwd()
 modpack_json = 'modpack.json'
 MO_downloads = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
 MO_mods = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\mods"
+#mod_MO_name = data[mod_file_name]['name'] + '-' + data[mod_file_name]['modID'] #TODO nexus_name
 switch_move_allowed = False
 switch_writeMetaFiles = False
 if test:
@@ -98,12 +100,10 @@ def try_load_json(json_file):
 		return jsondata
 	except FileNotFoundError:
 		print('FAIL: File {0} does not exist in this folder'.format(json_file))
-		return False
 		exit(1)
 	except json.JSONDecodeError as e:
 		print('FAIL: JSON Decode Error:\n  {0}'.format(e))
 		exit(2)
-		return False
 		
 
 def verify_mods(mods, data):
@@ -115,6 +115,9 @@ def verify_mods(mods, data):
 	#def transfer(mod, target):
 	
 	def writeMetaFiles(mod_file_name):
+		"""
+		Writes meta.ini you should get when doing querying info in MO
+		"""
 		if debug:
 			print('Writing meta file to', destination + '.meta')
 		with open (destination + '.meta','w') as meta_file:
@@ -124,11 +127,45 @@ def verify_mods(mods, data):
 				meta_file.write('comment=' + data[mod_file_name]['comment'] + '\n')
 			meta_file.write('modID=' + data[mod_file_name]['modID'] + '\n')
 			meta_file.write('name=' + data[mod_file_name]['name'] + '\n')
-			if data[mod_file_name]['nexus_name'] != None and data[mod_file_name]['nexus_name'] != None:
+			if data[mod_file_name]['nexus_name'] != None and data[mod_file_name]['nexus_categoryN'] != None:
 				meta_file.write('modName=' + data[mod_file_name]['nexus_name'] + '\n')
 				meta_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n')
 			#TODO revive that special version parsing?
-			meta_file.write('version=' + data[mod_file_name]['version'] + '\n')				
+			meta_file.write('version=' + data[mod_file_name]['version'] + '\n')
+
+	def write_meta_ini(target_path):
+		"""
+		Writes meta.ini to mod folder
+		check Horns Are Forever-20861-1-0.7z, it has its own meta.ini!
+		14559-Smart Souls 90
+		23390-Guard Dialogue Overhaul
+		61605-blocksteal redux 1_5
+		"""
+		if debug:
+			print('Writing meta.ini file to', target_path)
+		with open(target_path, 'w') as meta_ini_file:
+			meta_ini_file.write('[General]\n')
+			#if comments are avaliable
+			if data[mod_file_name].get('comment') is True:
+				meta_ini_file.write('comment=' + data[mod_file_name]['comment'] + '\n') #TODO maybe delete
+			meta_ini_file.write('modid=' + data[mod_file_name]['modID'] + '\n')
+			meta_ini_file.write('version=' + data[mod_file_name]['version'] + '\n') #TODO revive that special version parsing?
+			#newestVersion ignored
+			if data[mod_file_name]['nexus_categoryN'] != None:
+				meta_ini_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n') #TODO do a MO category map converter
+			meta_ini_file.write('installationFile=' + data[mod_file_name]['file_name'] + '\n')
+			#ALL IGNORED
+			#repository=Nexus
+			#ignoredVersion=
+			#notes=
+			#nexusDescription=
+			#lastNexusQuery=
+			meta_ini_file.write('\n')
+			meta_ini_file.write('[installedFiles]\n')
+			meta_ini_file.write('1\modid=' + data[mod_file_name]['modID'] + '\n')
+			#ignored
+			#1\fileid=1000162106
+			#size=1			
 	
 	def copy_mods(source, destination):
 		try:
@@ -152,93 +189,160 @@ def verify_mods(mods, data):
 			#TODO except [Errno 28] No space left on device
 		
 	def verify_and_unpack_mod_to(mod, target, auto_create_dir=True):
-		#TODO HOHOHO, reinvent the wheel here
-		"""rules are:
-
-		rules are done in big OR, nobody cares about big AND, yet
-
-		on root folder - dict(root_folder_whitelist)
-
-			double-check:
-				mods with dirs optionals
-				blacklist: images, why omg?? (iWASM V 1-51087-1-0)
-
-				mods:
-				main menu wallpaper replacer HD 1080p now with randomizer **mainmenuwallpapers**
-				FamiliarFaces_1.1.5-54509-1-1-5 **vMYC**
-				Option C-6594.7z - topdir is Lockpick graduation by Lilyu option C 1.0\\textures\ - remove textures
-				INI settings-51038-1-1.rar - catches topdir after SKSE, bad!
-				FSS - Better Bards-6496-1-0.rar - completely broken, topdir is sounds\voice
-				Enhanced AI Framework-73912-2-5 - data scripts weirdly	
 		"""
+		Tries to solve all the mess with mods without installers
+		
+		rules are:
+		- done in big OR, nobody cares about big AND, yet
+		- on root folder must be any of these dirs or files - dict(root_folder_whitelist)
 
-		root_folder_whitelist = {
+		note:
+			- files outside Data or any other top_dir will not get extracted
+			- for example in iWASM V 1-51087-1-0 only what is in Data will be extracted, Images and readme.txt will be ignored
+			- SMART packaging like this (more tavel idles v0.5-74799-0-5.zip) gets confusing, luckily it chooses (hopefully everytime) legendary version, which most people should need
+			- Optional gets ignored, like in here for example Skyrim Project Optimization - Full Version-32505-1-6.rar
+		
+			- moved files have old data timestamp, maybe touch them?
+		
+		known to fail:
+			Better Horse Pain Sounds-12608-1.zip
+			True Medieval Tavern Music-27425-1-0.rar
+			tavern mix-5665-1-0.rar
+			
+			and perhaps sound specific mods
+		"""
+		re_allowed_files = r'^[\w\d\-\_\s\.\'\&]+\.[esm|esp|bsa|bsl]+$'
+		file_rules = {
 				"dirs": ["Interface", "Meshes", "Seq", "Sound", "Textures", "Scripts", "SKSE", "SkyProc Patchers", "Video"],
-				"docs": [".docx"],
-				"docs_dirs": ["docs", "fomod", "readme", "readmes"],
 				"files": [".esm", ".esp", ".bsa", ".bsl"]
 			}
-
-		#patool_list_archives stuff
-		def do_list_search(re,match = False):
-			return patool_list_archives.Archive(mod).search_for_file_in_archive(re, match)
-
-		def write_meta_ini():
-			"""check Horns Are Forever-20861-1-0.7z, it has its own meta.ini!"""
-			pass
-
-
-		tmp_dir = tempfile.TemporaryDirectory(suffix='modpack_unpack')
-
-		#bad
-		re_main_dirs_files = r'[\\]+((Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)|[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+$)'
-		#re_data_dir = r'([\\]+)?data' + re_main_dirs_files #search for data
-		re_match_dir = r'^(.*)' + re_main_dirs_files #.* is the wanted group
-
-		#good
-		re_has_files = '(^[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+)$'
-		re_allowed_dirs = r'^(Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)'
-		#re_has_files_anywhere = r'(^.*\\)?([\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+)$'
-
-
-		match_dir = do_list_search(re_match_dir, match = True)
-		if match_dir:
-			top_dir = match_dir.group(1)
-			if debug:
-				print('top_dir is:', top_dir)
-			if 'data' in top_dir.lower():
-				print('BAD:this mod has a data folder')
-				print('extract it, start from data folder and then move')
-			#try if applying topdir will be enough
-			if do_list_search(r'^' + top_dir.replace('\\\\','[\\]+').replace('\\','') + re_main_dirs_files): #maybe you are doing this twice
-				print('GOOD:in archive everything starting from', top_dir, 'up seems ok')
-				archive = pyunpack.Archive(mod)
-				archive.extractall(tmp_dir.name, auto_create_dir=auto_create_dir)
-				print('now I would use', tmp_dir.name + r'\\' + top_dir, 'and extract next')
-				try:
-					#TODO again bug when folder already exists
-					shutil.move(tmp_dir.name + r'\\' + top_dir, target)
-				except PermissionError as pe_move:
-					print("FAIL: Couldn't move file: {0}| WTF?"
-					.format(pe_move.filename))
-				return target+r'\\'+top_dir
-		#maybe this should be tested first?
-		if do_list_search(re_has_files):
-			print('GOOD:this mod has esp on root folder')
-			archive = pyunpack.Archive(mod)
-			archive.extractall(target, auto_create_dir=auto_create_dir)
-		elif do_list_search(re_allowed_dirs):
-			print('GOOD:allowed dirs on root folder')
-			archive = pyunpack.Archive(mod)
-			archive.extractall(target, auto_create_dir=auto_create_dir)
-
-		#all done cleanup
-		try:
-			tmp_dir.cleanup()
-		except PermissionError as pe_clean:
-			print("WARNING: Can't remove file: {0}|Please clean it up manually"
-			.format(pe_clean.filename))
+		#not used
+			##re_main_dirs_files = r'[\\]+((Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)|[\w\d\-\_\s\.]+\.[esm|esp|bsa|bsl]+$)'
+			##re_data_dir = r'([\\]+)?data' + re_main_dirs_files #search for data
+			##re_match_dir = r'^(.*)' + re_main_dirs_files #.* is the wanted group
+		docs_rules = {
+				"docs_dirs": ["docs", "fomod", "readme", "readmes"],
+				"docs": [".docx"]
+		}
+				
+		def do_list_search(a_list, pattern, match = False):
+			"""
+			excpects a list called:
+			
+			a_list = patool_list_archives.Archive(mod).list_archive(only_files=True)
+			
+			searches in the whole_alist by line (filename)
+			and by first instance of sucessfull re:
+				if match is False
+					search for filename in content by re.search
+					pattern is regular re, always used with re.IGNORECASE
+					returns True or False
+				if match is True
+					if pattern matched returns match object
+			"""
+			for line in a_list:
+				#list_archive_content returns dict with indexes - stupid 
+				filename = line[5]
+				if match:
+					#if to returns groups
+					dig = re.match(pattern, filename, re.IGNORECASE)
+					if dig:
+						return dig
+				else:
+					#if just to tell if its there
+					found = re.search(pattern, filename, re.IGNORECASE)
+					if found:
+						return True
+			#nothing was sucessfull
+			raise UserWarning
 		
+
+				
+			
+		def get_top_dir(list_of_paths):
+			"""
+			go through the content, and try to identify first line where there is allowed dir
+			based on that return a part of that file path which will be used as top_dir
+			"""
+			not_matched = set()
+			for line in list_of_paths:
+				for part_of_path in line[5].split(r'\\'):
+					#if it was done already it should be in not_matched, otherwise search
+					if part_of_path not in not_matched:
+						#use lower for non case sensitve
+						if any(okdir.lower() in part_of_path.lower() for okdir in file_rules['dirs']):
+							if debug:
+								print('OK:',line[5])
+							#return directory path to extract from
+							return(line[5][:line[5].index(part_of_path)])
+						else:
+							#no dirs validated, try files
+							if re.match(re_allowed_files, part_of_path, re.IGNORECASE):
+								return(line[5][:line[5].index(part_of_path)])
+							if debug:
+								print('NOK:', part_of_path)
+							not_matched.add(part_of_path)
+					else:
+						if debug:
+							print('SKIP:',part_of_path)
+		
+		def try_cleanup():
+			#all done cleanup
+			try:
+				tmp_dir.cleanup()
+			except PermissionError as pe_clean:
+				print("WARNING: Can't remove file: {0}|Please clean it up manually"
+				.format(pe_clean.filename))
+
+		list_of_paths = patool_list_archives.Archive(mod).list_archive(only_files=True)
+		#if archive has any file_name ([\w\d\-\_\s\.\'\&]+) with allowed extensions in root of archive
+		try:
+			do_list_search(list_of_paths, re_allowed_files)
+			#todo maybe do with match and print which file was determined as OK
+			if debug:
+				print('GOOD:this mod has esp in root folder')
+			archive = pyunpack.Archive(mod)
+			archive.extractall(target, auto_create_dir=auto_create_dir)				
+			return mod + target 
+		except UserWarning:
+			#do_list_search didn't find anything
+			print('W:no allowed extensions in root of achive')			
+		#check if there is any allowed directory in root of archive
+		try:
+			do_list_search(list_of_paths, r'^(Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)')
+			#todo maybe do with match and print which dir was determined as OK
+			if debug:
+				print('GOOD:allowed dirs in root folder')
+			archive = pyunpack.Archive(mod)
+			archive.extractall(target, auto_create_dir=auto_create_dir)				
+			return mod + target
+		except UserWarning:
+			#do_list_search didn't find anything
+			print('W:no allowed data folder in root of archive')
+		#do deep validation
+		if debug:
+				print('trying_to_guess top dir for:', mod)
+		tmp_dir = tempfile.TemporaryDirectory(suffix='modpack_unpack')
+		top_dir = get_top_dir(list_of_paths)
+		if top_dir:
+			print('GOOD:in archive everything starting from', top_dir, 'up seems ok')
+			print('Unpacking to tmp')
+			archive = pyunpack.Archive(mod)
+			archive.extractall(tmp_dir.name, auto_create_dir=auto_create_dir)
+			print('now moving from tmp ' + top_dir, 'and extracting')
+			try:
+				shutil.move(tmp_dir.name + r'\\' + top_dir, target)
+			except PermissionError as pe_move:
+				print("FAIL: Couldn't move file: {0}| WTF?"
+				.format(pe_move.filename))
+			#TODO again bug when folder already exists
+			#except Destination path 'asfsa\Data' already exists			
+			try_cleanup()
+			return mod + target+r'\\'+top_dir
+		else:
+			#no topdir, autoextract failed
+			return False
+				
 	for mod in mods:
 		mod_file_name = mod[mod.rfind('\\') + 1:]
 		if test:
@@ -258,14 +362,28 @@ def verify_mods(mods, data):
 						print('Moving {0} to {1}'.format(mod, destination))
 					#check mod has installer, then copy it to dl folder
 					if data[mod_file_name]["has_installer"]:
-						print('Handle',mod,'yourself')
+						print('Handle',mod_file_name,'yourself')
 						copy_mods(mod, MO_downloads + '/' + mod_file_name)
+						if switch_writeMetaFiles:
+							writeMetaFiles(mod_file_name)
 						continue
 					#if mod has no installer and correct order (no data dir) unpack it to mods folder
-					mod_MO_name = data[mod_file_name]['modID'] + '-' + data[mod_file_name]['name']
-					verify_and_unpack_mod_to(mod, MO_mods + r'\\' + mod_MO_name)
-					if switch_writeMetaFiles:
-						writeMetaFiles(mod_file_name)
+					if data[mod_file_name]['nexus_name'] is not None:
+						mod_MO_name = data[mod_file_name]['nexus_name']
+					else:
+						mod_MO_name = data[mod_file_name]['name']
+					#if the target folder already exists do a in increment
+					if os.path.exists(os.path.join(MO_mods + r'\\' + mod_MO_name)):
+						mod_MO_name += '_ad'
+					unpack_sucess = verify_and_unpack_mod_to(mod, MO_mods + r'\\' + mod_MO_name)
+					if unpack_sucess is False: #failed to extract the mode
+						print('ERROR: Autoextract failed, copying mod', mod_file_name, 'to downloads')
+						print('Handle',mod_file_name,'yourself')
+						copy_mods(mod, MO_downloads + '/' + mod_file_name)
+						if switch_writeMetaFiles:
+							writeMetaFiles(mod_file_name)
+					else:
+						write_meta_ini(MO_mods + r'\\' + mod_MO_name + r'\\meta.ini')
 			else:
 				print('ERROR:', mod_file_name, 'has different checksum')
 		else:
