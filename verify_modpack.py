@@ -112,8 +112,6 @@ def verify_mods(mods, data):
 	mod is full path
 	mod_file_name is just file_name, used as keys in json data
 	"""
-	#def transfer(mod, target):
-	
 	def writeMetaFiles(mod_file_name):
 		"""
 		Writes meta.ini you should get when doing querying info in MO
@@ -140,7 +138,111 @@ def verify_mods(mods, data):
 		14559-Smart Souls 90
 		23390-Guard Dialogue Overhaul
 		61605-blocksteal redux 1_5
+		
+		nexus_categoryN
 		"""
+		def convert_category_number(nexus_categoryN):
+			"""
+			input nexus_categoryN will get loaded in field 2
+			in categories.dat, which format is
+			$ID|$NAME|$NEXUS_ID|$PARENT_ID
+			
+			so far supporting hardcoded values
+			#TODO do a function to load custom categories.dat
+			"""
+			
+			categories_data = '1|Animations|51|0\n2|Armour|54|0\n3|Sound & Music|61|0\n\
+			5|Clothing|60|0\n6|Collectables|92|0\n28|Companions|66,96|0\n7|Creatures & Mounts|83,65|0\n\
+			8|Factions|25|0\n9|Gameplay|24|0\n10|Hair|26|0\n11|Items|27,85|0\n32|Mercantile|69|0\n\
+			19|Weapons|55|11\n36|Weapon & Armour Sets|39|11\n12|Locations|22,30,70,88,89,90,91|0\n\
+			31|Landscape Changes|58|0\n4|Cities|53|12\n29|Environment|74|0\n30|Immersion|78|0\n\
+			25|Castles & Mansions|68|23\n20|Magic|75,93,94|0\n21|Models & Textures|29|0\n\
+			33|Modders resources|82|0\n13|NPCs|33|0\n14|Patches|79,84|0\n24|Bugfixes|95|0\n\
+			35|Utilities|39|0\n26|Cheats|40|0\n23|Player Homes|67|0\n15|Quests|35|0\n\
+			16|Races & Classes|34|0\n27|Combat|77|0\n22|Skills|73|0\n34|Stealth|76|0\n17|UI|42|0\n18|Visuals|62|0'
+			
+			for line in categories_data.split('\n'):
+				#search for nexus_categoryN on index 2
+				if nexus_categoryN in line.split('|')[2]:
+					#we are looking for first index, the ID for MO
+					return line.split('|')[0]
+					
+		def MO_version_parser(source):
+			"""
+			converts all normal versions to MO like versions
+			
+			handles all mess versions like FinalA
+			
+			source			target			file
+			3-1-5a			3.1.5.0a		Alternate Start - Live Another Life-9557-3-1-5a.7z
+			1-42-5-H		1.42.5.0.H		ASIS Patcher 1-42-5 Hacked-18436-1-42-5-H.7z
+			9-0-1			9.0.1.0			A Quality World Map 9.0.1 - Vivid with Stone
+			v3-2			3.2.0.0			3DNPC v3.2-8429-v3-2.7z
+			5-0a			5.0.0.0a		Apophysis Dragon Priest Masks - Main File-15052-5-0a.rar
+			FinalA			FinalA			Relationship Dialogue Overhaul - RDO FinalA-74568-FinalA.7z
+			-8				.8  			Windstad Mine - Loose Version-57879--8.zip
+			
+			ignoring cases like
+			source			target			file
+			6-02			f6.02			Wildcat v602-76529-6-02.zip
+			"""
+			
+			
+			pure_letters = re.search('^[a-zA-Z]+$', source)
+			if pure_letters:
+				if debug:
+					print('[MO_version_parser]:pure_letters, doing nothing')
+				return source
+			#CONST
+			magic_ad = '.0'
+			
+			#replaces - to .
+			target = source.replace('-','.')
+			#check if version starts with letter, then remove it
+			startswith_letter = re.match('^([a-zA-Z]+)', target)
+			if startswith_letter:
+				if debug:
+					print('[MO_version_parser]:startswith_letter')
+				target = target.replace(startswith_letter.group(1),'')
+			just_numbers = re.search('^[\d\.]+$', target) #only numbers and dots in whole string
+			if just_numbers:
+				if debug:
+					print('[MO_version_parser]:version is just numbers')
+				if target.startswith('.'): #windstat mine case
+					if debug:
+						print('[MO_version_parser]:version started with -')
+					pass # just return it as it is 
+				else:
+					while not target.count('.') is 3: #MO expects version with at least 3 dots
+						target += magic_ad
+			else:
+				#fun begins
+				#check if version ends with letter
+				endswith_letter = re.match('[\d\.]+([a-zA-Z]+)$', target)
+				if endswith_letter:
+					if debug:
+						print('[MO_version_parser]:endswith_letter')
+					ml = endswith_letter.group(1) #matched letter
+					#ASIS patcher case, remove letter and the dot, then re add it? REVISE
+					if target.replace(ml,'').endswith('.'):
+						if debug:
+							print('[MO_version_parser]:endswith(\'.\')')
+						target = target.replace(ml,'')[:-1]
+						#make it MO friendly
+						while not target.count('.') is 3:
+								target += magic_ad
+						#readd the letter
+						target += '.' + ml
+					else:
+						#remove letter from version
+						target = target.replace (ml,'')
+						#make it MO friendly
+						while not target.count('.') is 3:
+								target += magic_ad
+						#readd the letter
+						target += ml
+			return target
+		
 		if debug:
 			print('Writing meta.ini file to', target_path)
 		with open(target_path, 'w') as meta_ini_file:
@@ -149,10 +251,14 @@ def verify_mods(mods, data):
 			if data[mod_file_name].get('comment') is True:
 				meta_ini_file.write('comment=' + data[mod_file_name]['comment'] + '\n') #TODO maybe delete
 			meta_ini_file.write('modid=' + data[mod_file_name]['modID'] + '\n')
-			meta_ini_file.write('version=' + data[mod_file_name]['version'] + '\n') #TODO revive that special version parsing?
+			meta_ini_file.write('version=' + MO_version_parser(data[mod_file_name]['version']) + '\n')
 			#newestVersion ignored
 			if data[mod_file_name]['nexus_categoryN'] != None:
-				meta_ini_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n') #TODO do a MO category map converter
+				MO_category_ID = convert_category_number(data[mod_file_name]['nexus_categoryN'])
+				if MO_category_ID is not None:
+					#category is written like this, for example:
+					#category="9,"
+					meta_ini_file.write('category="' + MO_category_ID + ',"\n')
 			meta_ini_file.write('installationFile=' + data[mod_file_name]['file_name'] + '\n')
 			#ALL IGNORED
 			#repository=Nexus
@@ -306,7 +412,8 @@ def verify_mods(mods, data):
 			return mod + target 
 		except UserWarning:
 			#do_list_search didn't find anything
-			print('W:no allowed extensions in root of achive')			
+			if debug:
+				print('W:no allowed extensions in root of achive')			
 		#check if there is any allowed directory in root of archive
 		try:
 			do_list_search(list_of_paths, r'^(Interface|Meshes|Seq|Sound|Textures|Scripts|SKSE|SkyProc Patchers|Video)')
@@ -318,18 +425,21 @@ def verify_mods(mods, data):
 			return mod + target
 		except UserWarning:
 			#do_list_search didn't find anything
-			print('W:no allowed data folder in root of archive')
+			if debug:
+				print('W:no allowed data folder in root of archive')
 		#do deep validation
 		if debug:
 				print('trying_to_guess top dir for:', mod)
 		tmp_dir = tempfile.TemporaryDirectory(suffix='modpack_unpack')
 		top_dir = get_top_dir(list_of_paths)
 		if top_dir:
-			print('GOOD:in archive everything starting from', top_dir, 'up seems ok')
-			print('Unpacking to tmp')
+			if debug:
+				print('GOOD:in archive everything starting from', top_dir, 'up seems ok')
+				print('Unpacking to tmp')
 			archive = pyunpack.Archive(mod)
 			archive.extractall(tmp_dir.name, auto_create_dir=auto_create_dir)
-			print('now moving from tmp ' + top_dir, 'and extracting')
+			if debug:
+				print('now moving from tmp ' + top_dir, 'and extracting')
 			try:
 				shutil.move(tmp_dir.name + r'\\' + top_dir, target)
 			except PermissionError as pe_move:
@@ -353,16 +463,13 @@ def verify_mods(mods, data):
 				print('[OK]',mod_file_name)
 				#if the source file exists
 				if os.path.exists(mod) is True:
-					#rather move dir_create elsweyr
-					#destination = os.path.join(os.getcwd(),MO_downloads + '/' + mod_file_name)
-					#destination_dir = os.path.join(os.getcwd(), MO_downloads)
-					#if not os.path.exists(destination_dir):
-					#	os.makedirs(destination_dir)
 					if debug:
 						print('Moving {0} to {1}'.format(mod, destination))
 					#check mod has installer, then copy it to dl folder
 					if data[mod_file_name]["has_installer"]:
-						print('Handle',mod_file_name,'yourself')
+						print('[NOK] Handle',mod_file_name,'yourself')
+						if not os.path.exists(MO_downloads):
+							os.makedirs(MO_downloads)
 						copy_mods(mod, MO_downloads + '/' + mod_file_name)
 						if switch_writeMetaFiles:
 							writeMetaFiles(mod_file_name)
@@ -378,7 +485,9 @@ def verify_mods(mods, data):
 					unpack_sucess = verify_and_unpack_mod_to(mod, MO_mods + r'\\' + mod_MO_name)
 					if unpack_sucess is False: #failed to extract the mode
 						print('ERROR: Autoextract failed, copying mod', mod_file_name, 'to downloads')
-						print('Handle',mod_file_name,'yourself')
+						print('[NOK] Handle',mod_file_name,'yourself')
+						if not os.path.exists(MO_downloads):
+							os.makedirs(MO_downloads)
 						copy_mods(mod, MO_downloads + '/' + mod_file_name)
 						if switch_writeMetaFiles:
 							writeMetaFiles(mod_file_name)
@@ -401,3 +510,7 @@ if __name__ == "__main__":
 	#------------------------------- verify json ---------------------------------
 	print('Trying to verify and move mods defined in',modpack_json,'to',MO_downloads)
 	verify_mods(mods_list, mods_data)
+	print('Done, writing, now writing MO profile')
+	#todo write new folder with modpack name to d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\profiles\
+	#there should be Default with inteligently edited skyrim.ini and etc for SANE defaults
+	#then figure it out...
