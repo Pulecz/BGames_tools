@@ -22,36 +22,34 @@ V0.0.8 - Fallout 4 Support, getting Nexus categories
 V0.0.9 - lots of rewrites, dropped making directories and summary.csv, purpose is clear now
        - to validate nexus id at lest 3 digits needs to be in file name between - chars
 V0.1.0 - first usable thing, split mod_name_validator to build_modpack.py and verify_modpack.py
+V0.1.2 - beta verify_mods function, it works! removing moving mods and always write meta files for copied mods
 
 Verifies a bunch of mods downloaded from Nexus in a target folder against $modpack.json provided by build_modpack.py.
 Mod is verified when checksum of the downloade_file is same as checksum of the entry for the mod in $modpack.json.
 Verified mod is then moved (or copied if moving failes) to MO_bin along with MO like meta files (except versions I guess) so Mod Organizer can work with it.
 
+Mod Organizer needs to be fed correct meta files as it cannot query info for many of them for some reason (probably trick with fileID)
+
+Writing plugins.txt, loadorder.txt and others txt will not be supported as its recommended to load files from ModPicker or to use LOOT
 
 TODOs:
   - Print links for missing files, so users can easilly download them
   - With that make soma kind of summary, how many files verified, etc
-  - Mod Organizer doesn't need meta files from us, it can query it allright, might be useful for some mods that got deleted from Nexus
   - do a check first if the files is already copied, or check how shutil does it
   - calculate how much space the copy to MO_bin will take and if there is enough space
-  - write plugins.txt, loadorder.txt, skyrim.ini to MO profile
-  - Write meta.ini to mod folder based just on the info from json
+  - write some SANE skyrimprefs.ini and other SANE defaults
+  - write new folder with modpack name to d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\profiles\
 """
 #-------------------------------------Input-------------------------------------
 #not used for now
 #Game = 'Fallout 4'
 #Game = 'Skyrim'
 debug = False
-test = False
 target = os.getcwd()
 modpack_json = 'modpack.json'
+#todo read utilities to get the MO path and just append downloads and mods
 MO_downloads = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
 MO_mods = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\mods"
-#mod_MO_name = data[mod_file_name]['name'] + '-' + data[mod_file_name]['modID'] #TODO nexus_name
-switch_move_allowed = False
-switch_writeMetaFiles = False
-if test:
-	MO_mods = r"c:\Users\pulec\git\BGames_tools\__TARGET"
 #----------------------------------- defs ------------------------------------
 
 
@@ -181,10 +179,18 @@ def verify_mods(mods, data):
 			5-0a			5.0.0.0a		Apophysis Dragon Priest Masks - Main File-15052-5-0a.rar
 			FinalA			FinalA			Relationship Dialogue Overhaul - RDO FinalA-74568-FinalA.7z
 			-8				.8  			Windstad Mine - Loose Version-57879--8.zip
-			
-			ignoring cases like
-			source			target			file
 			6-02			f6.02			Wildcat v602-76529-6-02.zip
+			1-01			f1.01			Blood of the Nord 1.01-72817-1-01.rar
+			4-05			f4.05			Thunderchild v405-41376-4-05.zip
+			4-06			f4.06			Wintermyst v406-58635-4-06.zip
+			2-02			f2.02			Timing is Everything-38151-2-02.7z
+			2-01			f2.01			WM Flora Fixes-70656-2-01.7z
+			1-04			f1.04			Modern Brawl Bug Fix v104-77465-1-04.zip
+			
+			known to fail:
+			usleep - version is really 3.0.8a, but file just tells 3-0-8, so
+			Multiple floors sandboxing has either or a b version (different option), but file just tells 1-0
+			
 			"""
 			
 			
@@ -212,6 +218,10 @@ def verify_mods(mods, data):
 					if debug:
 						print('[MO_version_parser]:version started with -')
 					pass # just return it as it is 
+				elif re.search('^\d+\.0\d+$', target): #zero after dot return "f" to front
+					if debug:
+						print('[MO_version_parser]:zero after dot, adding "f" to front')
+					return 'f' + target
 				else:
 					while not target.count('.') is 3: #MO expects version with at least 3 dots
 						target += magic_ad
@@ -455,8 +465,6 @@ def verify_mods(mods, data):
 				
 	for mod in mods:
 		mod_file_name = mod[mod.rfind('\\') + 1:]
-		if test:
-			input('handling ' + mod_file_name)
 		if data.get(mod_file_name) is not None:
 			mod_checksum = make_checksum(mod)
 			if mod_checksum == data[mod_file_name]['sha1']:
@@ -471,17 +479,19 @@ def verify_mods(mods, data):
 						if not os.path.exists(MO_downloads):
 							os.makedirs(MO_downloads)
 						copy_mods(mod, MO_downloads + '/' + mod_file_name)
-						if switch_writeMetaFiles:
-							writeMetaFiles(mod_file_name)
+						writeMetaFiles(mod_file_name)
 						continue
 					#if mod has no installer and correct order (no data dir) unpack it to mods folder
 					if data[mod_file_name]['nexus_name'] is not None:
 						mod_MO_name = data[mod_file_name]['nexus_name']
 					else:
 						mod_MO_name = data[mod_file_name]['name']
-					#if the target folder already exists do a in increment
+					#if the target folder already exists, its probably same modID, use name now
 					if os.path.exists(os.path.join(MO_mods + r'\\' + mod_MO_name)):
-						mod_MO_name += '_ad'
+						if	'patch' in data[mod_file_name]['name'].lower():
+							mod_MO_name += "_patch"
+						else:
+							mod_MO_name = data[mod_file_name]['name']
 					unpack_sucess = verify_and_unpack_mod_to(mod, MO_mods + r'\\' + mod_MO_name)
 					if unpack_sucess is False: #failed to extract the mode
 						print('ERROR: Autoextract failed, copying mod', mod_file_name, 'to downloads')
@@ -489,8 +499,7 @@ def verify_mods(mods, data):
 						if not os.path.exists(MO_downloads):
 							os.makedirs(MO_downloads)
 						copy_mods(mod, MO_downloads + '/' + mod_file_name)
-						if switch_writeMetaFiles:
-							writeMetaFiles(mod_file_name)
+						writeMetaFiles(mod_file_name)
 					else:
 						write_meta_ini(MO_mods + r'\\' + mod_MO_name + r'\\meta.ini')
 			else:
@@ -510,7 +519,4 @@ if __name__ == "__main__":
 	#------------------------------- verify json ---------------------------------
 	print('Trying to verify and move mods defined in',modpack_json,'to',MO_downloads)
 	verify_mods(mods_list, mods_data)
-	print('Done, writing, now writing MO profile')
-	#todo write new folder with modpack name to d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\profiles\
-	#there should be Default with inteligently edited skyrim.ini and etc for SANE defaults
-	#then figure it out...
+	#TODO print('Done, writing, now writing default MO profile')

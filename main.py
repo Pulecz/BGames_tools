@@ -32,9 +32,10 @@ def try_load_json(json_file):
 
 #how to unpack mod pack
 def print_guidance():
-	print("Using TES5 Edit cleanup Master files, here is how: http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Clean_The_Bethesda_ESMs")
-	print("When you're finished do a Merged Patch, here is how: https://www.youtube.com/watch?v=BtLolEgVMTg")
-	print("When you're finished do a Bashed Patch, here is how: https://www.youtube.com/watch?v=W1Es06MtAZM, http://wiki.step-project.com/Bashed_Patch or https://www.reddit.com/r/skyrimmods/wiki/beginners_guide_quickstart#wiki_create_a_bashed_patch")
+	print("Started Mod Organizer, log in and update to 1.3.11")
+	#print("Using TES5 Edit cleanup Master files, here is how: http://wiki.step-project.com/User:Neovalen/Skyrim_Revisited_-_Legendary_Edition#Clean_The_Bethesda_ESMs")
+	#print("When you're finished do a Merged Patch, here is how: https://www.youtube.com/watch?v=BtLolEgVMTg")
+	#print("When you're finished do a Bashed Patch, here is how: https://www.youtube.com/watch?v=W1Es06MtAZM, http://wiki.step-project.com/Bashed_Patch or https://www.reddit.com/r/skyrimmods/wiki/beginners_guide_quickstart#wiki_create_a_bashed_patch")
 	print("Then use verify_modpack.py to get whole modpack to ModOrganizer's download folder and follow the installation procedure described in modpack")
 	input('Confirm by any key when done')
 
@@ -81,6 +82,9 @@ use_sevenzip(sevenzip_path, 'a -t7z','d:\\games_stuff\TES5_Skyrim\\0100-Patches.
 'd:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\profiles
 d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\overwrite
 d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\mods')
+
+todo
+	support for mod analyzer
 
 
 what next

@@ -125,6 +125,7 @@ def parse_nexus_mods(mods):
 		"""
 		Tries to return title and categories from nexus mods like:
 		url = 'http://www.nexusmods.com/skyrim/mods/30947/'
+		#TODO get author of the mod
 		"""
 		url = 'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
 		try: # handle if url is not reachable error

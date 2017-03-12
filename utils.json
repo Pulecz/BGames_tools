@@ -4,8 +4,8 @@
       "_comment_" : ["https://sourceforge.net/projects/modorganizer/",
                      "https://github.com/TanninOne/modorganizer/releases"],
       "name": "Mod Organizer",
-      "version": "1.3.10",
-      "download": "http://iweb.dl.sourceforge.net/project/modorganizer/ModOrganizer_v1.3.10.7z",
+      "version": "1.3.11",
+      "download": "https://github.com/TanninOne/modorganizer/archive/release_v1.3.11.zip",
       "sha1": "a5953ac567f04055ebeb3971916f2ccc107e7172",
       "install_path": "%SkyrimPath%\\Mods\\ModOrganizer"
     },
