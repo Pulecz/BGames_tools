@@ -7,36 +7,36 @@
 
 TODOs
 	if download() returns False, handle it
+	replace %FO4Path%',and %SkyrimPath% some better way
 """
 from winreg import HKEY_LOCAL_MACHINE, KEY_READ, OpenKey, QueryValueEx #for get_skyrim_dir
 import urllib.request, os, sys #for download
 import hashlib #for verifying
 
 
-def get_skyrim_dir():
+def game_dir_from_registry(reg_path):
 	"""
-	Tries to read HKLM/SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim
-	in registry	for value installed_path to return skyrim_dir
+	Tries to read reg_path like:
+	HKLM/SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim
+	
+	in registry	for value installed_path to return game_dir
 	"""
-	#reg_path might be different on 32bit systems
-	reg_path = r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim"
 	reg_value = "installed path"
 	try:
 		PyHKEY = OpenKey(HKEY_LOCAL_MACHINE, reg_path, 0, KEY_READ)
-		skyrim_dir = QueryValueEx(PyHKEY, reg_value)[0]
+		game_dir = QueryValueEx(PyHKEY, reg_value)[0]
 	except FileNotFoundError:
 		print('No key or no value "{0}" in:HKLM\{1}'.format(reg_value, reg_path))
 		raise ValueError #leads to exit 99 in main.py
-	return skyrim_dir
-
+	return game_dir
 	
-def dl_utilities(input_json, target_dir, skyrim_dir):
+def dl_utilities(input_json, target_dir, game_dir):
 	"""
 	Loops over input_json and tries to verify each utility
 	If the file has a bad checksum or is not found, its downloaded to target_dir
 	Returns dict with info needed for installation
 	
-	skyrim_dir is needed for correct install_path
+	game_dir is needed for correct install_path
 	"""
 	result = {}
 	def download(url, dest):
@@ -96,12 +96,19 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 			referer = 'http://enbdev.com/download_mod_tesskyrim.html'
 			download_with_referer(url, target, referer)
 			return target
+		if 'www.dev-c.com/' in url:
+			#TODO try to check all was fine?
+			referer = 'http://www.dev-c.com/fallout4/'
+			download_with_referer(url, target, referer)
+			return target
 		try:
 			path, header = urllib.request.urlretrieve(url, target, reporthook)
 			return path #should be same as target
 		except urllib.error.HTTPError as e:
 			print(e)
 			return False
+			
+	
 	def call_download(target_dir):
 		"""
 		call download() and if sucessfull calculates checksum
@@ -121,7 +128,8 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 			result[utility['name']] = {
 			"crc_sha1" : hex_crc,
 			"install_path" : utility['install_path']
-			.replace('%SkyrimPath%', skyrim_dir),
+			.replace('%SkyrimPath%', game_dir)
+			.replace('%FO4Path%', game_dir),
 			"path" : path,
 			"verified" : hex_crc_same_as_config_crc
 			 }
@@ -137,7 +145,8 @@ def dl_utilities(input_json, target_dir, skyrim_dir):
 				"path" : path,
 				"verified" : True,
 				"install_path" : utility['install_path']
-				.replace('%SkyrimPath%', skyrim_dir)
+				.replace('%SkyrimPath%', game_dir)
+				.replace('%FO4Path%', game_dir)
  				}
 			else: #not verified
 				result.update(call_download(target_dir))

@@ -1,0 +1,174 @@
+{
+  "game" : "Fallout 4",
+  "utilities" : [
+    {
+      "_comment_" : ["https://sourceforge.net/projects/modorganizer/",
+                     "https://github.com/TanninOne/modorganizer/releases",
+					 "https://github.com/LePresidente/modorganizer/releases-https://github.com/LePresidente/modorganizer/releases/download/v2.0.8.3b/Mod.Organizer-2.0.8.3.exe"],
+      "name": "Mod Organizer",
+      "version": "2.0.7",
+      "download": "https://github.com/TanninOne/modorganizer/releases/download/v2.0.7b/Mod.Organizer-2.0.7.exe",
+      "sha1": "34d69d98b67c6ebd59088206451fc8422d75a721",
+      "install_path": "%FO4Path%\\Mods\\ModOrganizer"
+    },
+    {
+      "_comment_" : "http://f4se.silverlock.org/",
+      "name": "SKSE",
+      "version": "0.3.0",
+      "download": "http://f4se.silverlock.org/beta/f4se_0_03_00.7z",
+      "sha1": "2d197c658131d96fe525c651038aff1609cec943",
+      "install_path": "%FO4Path%\\MODS"
+    },
+    {
+      "_comment_" : "http://enbdev.com/download_mod_fallout4.htm",
+      "name": "ENB",
+      "version": "0.311",
+      "download": "http://enbdev.com/enbseries_fallout4_v0311.zip",
+      "sha1": "98093ad5d03580f869dc79fab3f0f717fad58b82",
+      "install_path": "%FO4Path%\\MODS"
+    },
+	{
+      "_comment_" : "http://www.nexusmods.com/fallout4/mods/1822/?",
+      "name": "Shadow Boost",
+      "version": "1.9.4.0",
+      "download": "http://www.dev-c.com/files/ShadowBoost_1.9.4.0.zip",
+      "sha1": "14385a3412944d0eea686680566b3f93a44ca077",
+      "install_path": "%FO4Path%\\MODS"
+    },
+	{
+      "_comment_" : "https://github.com/loot/loot/releases",
+      "name": "LOOT",
+      "version": "0.10.3",
+      "download": "https://github.com/loot/loot/releases/download/0.10.3/loot_0.10.3-0-g0fcf788_dev_Win32.7z",
+      "sha1": "62e2de9277bd98527ba6848f253f89682b3950c8",
+      "install_path": "%FO4Path%\\Mods\\LOOT"
+    },
+    {
+      "_comment_" : "https://github.com/TES5Edit",
+      "name": "FO4Edit",
+      "version": "3.1.3",
+      "download": "https://github.com/TES5Edit/TES5Edit/releases/download/FO4Edit-fa3cf0b/FO4Edit.3.1.3.-.fa3cf0b.7z",
+      "sha1": "3ba6078c45cf5a9d7d1c0f0f447496aeeac8d49b",
+      "install_path": "%FO4Path%\\Mods\\FO4Edit"
+    },
+    {
+      "_comment_" : "https://github.com/matortheeternal/smash/releases",
+  		"name": "Mator Smash",
+  		"version": "0.4",
+  		"download": "https://github.com/matortheeternal/smash/releases/download/0.4/MatorSmash.zip",
+      "sha1": "e437683c5a380bc972154d2817758f1fc4ac5053",
+  		"install_path": "%FO4Path%\\Mods\\MatorSmash"
+  	},
+    {
+      "_comment_" : "https://github.com/wrye-bash/wrye-bash/releases",
+      "name": "Wrye Bash",
+      "version": "0.306",
+      "download": "https://github.com/wrye-bash/wrye-bash/releases/download/v306/Wrye.Bash.306.-.Standalone.Executable.7z",
+      "sha1": "05b373772bee61d8f13a9732950b8036e8daea67",
+      "install_path": "%FO4Path%\\Mods\\WryeBash"
+    },
+	{
+	  "_comment_" : "https://github.com/matortheeternal/mod-analyzer/releases",
+      "name": "Mod Analyzer",
+      "version": "2.0.5",
+      "download": "https://github.com/matortheeternal/mod-analyzer/releases/download/2.0.5/ModAnalyzer.zip",
+      "sha1": "4f4e3f40a9393a916c451dccc16145ce81e4db23",
+      "install_path": "%FO4Path%\\Mods\\ModAnalyzer"
+	}
+  ],
+  "ModOrganizer.ini": {
+    "[Plugins]": [
+      "Basic%20diagnosis%20plugin\\check_modorder=false"
+    ],
+    "[customExecutables]": [
+      {
+        "title": "F4SE",
+        "custom": "false",
+        "toolbar": "false",
+        "ownicon": "false",
+		"binary": "%FO4Path%\\f4se_loader.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "Fallout 4",
+        "custom": "false",
+        "toolbar": "false",
+        "ownicon": "false",
+		"binary": "%FO4Path%\\Fallout4.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "Fallout 4 Launcher",
+        "custom": "false",
+        "toolbar": "false",
+        "ownicon": "false",
+		"binary": "%FO4Path%\\Fallout4Launcher.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "FO4Edit",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%FO4Path%\\Mods\\FO4Edit\\FO4Edit.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "LOOT",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%FO4Path%\\Mods\\LOOT\\LOOT.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "Smash",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%FO4Path%\\Mods\\MatorSmash\\MatorSmash.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+      },
+      {
+        "title": "WryeBash",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%FO4Path%\\Mods\\WryeBash\\Wrye Bash.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+	  },
+	  {
+        "title": "Mod Analyzer",
+        "custom": "true",
+        "toolbar": "true",
+        "ownicon": "true",
+        "binary": "%FO4Path%\\Mods\\ModAnalyzer\\ModAnalyzer.exe",
+        "arguments": "",
+        "workingDirectory": "",
+        "closeOnStart": "false",
+        "steamAppID": ""
+    }
+  ]
+  }
+}

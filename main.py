@@ -8,10 +8,11 @@
 from json import load, JSONDecodeError #for def load_json:
 import m0prerequisites
 import m1utils_install
+import os
 import sys # for exits
 #------------------------------------config-------------------------------------
-json_file = 'utils.json'
-utilities_download_dir = 'utilities'
+json_file = 'fo4_utils.json'
+utilities_download_dir = 'utilitiesfo4'
 print_guidance_switch = True
 #-------------------------------------defs--------------------------------------
 
@@ -42,32 +43,46 @@ def print_guidance():
 
 if __name__ == "__main__":
 	#---------------------------- 0. Prerequisites -----------------------------
-	try:
-		skyrim_dir = m0prerequisites.get_skyrim_dir()
-	except ValueError:
-		print('No registry entry for Skyrim. Run Skyrim at least once')
-		print('FAIL: Exit 99')
-		sys.exit(99)
-
 	input_json = try_load_json(json_file)
 	if input_json is False:
-		print('FAIL: Exit 1')
+		print('ERROR: Exit 1')
 		sys.exit(1)
+		
+	if input_json['game'] == 'Skyrim':
+		try:
+			game_dir = m0prerequisites.game_dir_from_registry(r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim")
+		except ValueError:
+			print('No registry entry for Skyrim. Run Skyrim at least once')
+			print('ERROR: Exit 99')
+			sys.exit(99)
+	elif input_json['game'] == 'Fallout 4':
+		try:
+			game_dir = m0prerequisites.game_dir_from_registry(r"SOFTWARE\WOW6432Node\Bethesda Softworks\Fallout4")
+		except ValueError:
+			print('No registry entry for Fallout 4. Run Fallout 4 at least once')
+			print('ERROR: Exit 99')
+			sys.exit(99)
+	else:
+		print("ERROR: Unsuported game", input_json['game'], ". Exit 2")
 
 	utilities_data = m0prerequisites.dl_utilities(
 	input_json, # for links
 	utilities_download_dir, #where to download
-	skyrim_dir) #for replacing %SkyrimPath in input_json
+	game_dir) #for replacing %SkyrimPath in input_json
 
-	input("Is {0} the correct dir for Skyrim?\nHit enter to confirm or ctrl+c to exit"
-	.format(skyrim_dir))
-
+	input("Is {0} the correct dir for {1}?\nHit enter to confirm or ctrl+c to exit"
+	.format(game_dir, input_json['game']))
 	#----------------------------- 1. Do Install -------------------------------
-	m1utils_install.install_utilities(utilities_data)
+	m1utils_install.install_utilities(input_json['game'], utilities_data)
 
-	mo_destination = utilities_data['Mod Organizer']['install_path']
+	if input_json['game'] == 'Fallout 4':
+		mo_destination = os.environ['LOCALAPPDATA'] + r'\\ModOrganizer\\Fallout 4'
+	else:
+		mo_destination = utilities_data['Mod Organizer']['install_path'] #TODO pass this to verify_modpack
+	if not os.path.exists(mo_destination):
+		os.makedirs(mo_destination)
 	mo_config = input_json['ModOrganizer.ini']
-	m1utils_install.write_MO_ini(mo_destination, mo_config, skyrim_dir)
+	m1utils_install.write_MO_ini(mo_destination, mo_config, game_dir)
 
 	#TODO install sumarry, what was installed sucessfuly and what not
 	if print_guidance_switch:

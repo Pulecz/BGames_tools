@@ -31,8 +31,8 @@ TODOs
 		means no skipping, just not writing categories
 """
 #-------------------------------------Input-------------------------------------
-#Game = 'Fallout 4'
-Game = 'Skyrim'
+Game = 'Fallout 4'
+#Game = 'Skyrim'
 debug = False
 target = os.getcwd()
 modpack_json = 'modpack.json' #output
@@ -69,15 +69,17 @@ def validate_input():
 	global switch_get_skyrimgems_desc
 	if Game == 'Fallout 4':
 		game_link = 'fallout4'
+		bellow_id_100_json = 'fo4_99ids.json'
 		switch_get_skyrimgems_desc = False
 	elif Game == 'Skyrim':
 		game_link = 'skyrim'
+		bellow_id_100_json = 'skyrim_99ids.json'
 	else:
 		print('Game {0} is not recognized as a valid option.\nHit any key to exit.'.format(Game))
 		input()
 		exit(1)
 	game_link_replacer = nexus_title_replace()
-	return (game_link, game_link_replacer)
+	return (bellow_id_100_json, game_link, game_link_replacer)
 
 
 def scan_dir(target):
@@ -234,7 +236,7 @@ def parse_nexus_mods(mods):
 			print('\nWARNING: Item "{0}" has probably ID bellow 100, trying to check for ids...\n'.format(mod_file_name))
 			#try looking if the file_name has nexus_id bellow 100
 			if not bellow_id_100_data:
-				bellow_id_100_data = load_bellow_id_100_data('skyrim_99ids.json')
+				bellow_id_100_data = load_bellow_id_100_data(bellow_id_100_json)
 			nexus_id = search_in_bellow_id_100_data(mod_file_name, bellow_id_100_data)
 			#if failed then skip, the file is surely not for nexus
 			if not nexus_id:
@@ -328,7 +330,7 @@ def try_save_json(json_file, data):
 		
 #-----------------------------------------------------------------------------
 if __name__ == "__main__":
-	game_link, game_link_replacer = validate_input() #exit if not OK
+	bellow_id_100_json, game_link, game_link_replacer = validate_input() #exit if not OK
 	#-----------------------------scan current dir------------------------------
 	mods_list = scan_dir(target)
 	#-------------------------------- get info ---------------------------------

@@ -48,8 +48,9 @@ debug = False
 target = os.getcwd()
 modpack_json = 'modpack.json'
 #todo read utilities to get the MO path and just append downloads and mods
-MO_downloads = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\downloads"
-MO_mods = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\mods"
+MO_bin = r"d:\SteamLibrary\steamapps\common\Fallout 4\Mods\ModOrganizer"
+MO_downloads = MO_bin + r"\downloads"
+MO_mods = MO_bin + r"\mods"
 #----------------------------------- defs ------------------------------------
 
 
@@ -110,6 +111,122 @@ def verify_mods(mods, data):
 	mod is full path
 	mod_file_name is just file_name, used as keys in json data
 	"""
+	
+	def convert_category_number(nexus_categoryN):
+			"""
+			input nexus_categoryN will get loaded in field 2
+			in categories.dat, which format is
+			$ID|$NAME|$NEXUS_ID|$PARENT_ID
+			
+			so far supporting hardcoded values
+			#TODO do a function to load custom categories.dat
+			#TODO currently adds huge tabs to begining to categories like 35
+			"""
+			
+			categories_data = '1|Animations|51|0\n2|Armour|54|0\n3|Sound & Music|61|0\n\
+			5|Clothing|60|0\n6|Collectables|92|0\n28|Companions|66,96|0\n7|Creatures & Mounts|83,65|0\n\
+			8|Factions|25|0\n9|Gameplay|24|0\n10|Hair|26|0\n11|Items|27,85|0\n32|Mercantile|69|0\n\
+			19|Weapons|55|11\n36|Weapon & Armour Sets|39|11\n12|Locations|22,30,70,88,89,90,91|0\n\
+			31|Landscape Changes|58|0\n4|Cities|53|12\n29|Environment|74|0\n30|Immersion|78|0\n\
+			25|Castles & Mansions|68|23\n20|Magic|75,93,94|0\n21|Models & Textures|29|0\n\
+			33|Modders resources|82|0\n13|NPCs|33|0\n14|Patches|79,84|0\n24|Bugfixes|95|0\n\
+			35|Utilities|38,39|0\n26|Cheats|40|0\n23|Player Homes|67|0\n15|Quests|35|0\n\
+			16|Races & Classes|34|0\n27|Combat|77|0\n22|Skills|73|0\n34|Stealth|76|0\n17|UI|42|0\n18|Visuals|62|0'
+			
+			for line in categories_data.split('\n'):
+				#search for nexus_categoryN on index 2
+				if nexus_categoryN in line.split('|')[2]:
+					#we are looking for first index, the ID for MO
+					return line.split('|')[0]
+					
+	def MO_version_parser(source):
+		"""
+		converts all normal versions to MO like versions
+		
+		handles all mess versions like FinalA
+		
+		source			target			file
+		3-1-5a			3.1.5.0a		Alternate Start - Live Another Life-9557-3-1-5a.7z
+		1-42-5-H		1.42.5.0.H		ASIS Patcher 1-42-5 Hacked-18436-1-42-5-H.7z
+		9-0-1			9.0.1.0			A Quality World Map 9.0.1 - Vivid with Stone
+		v3-2			3.2.0.0			3DNPC v3.2-8429-v3-2.7z
+		5-0a			5.0.0.0a		Apophysis Dragon Priest Masks - Main File-15052-5-0a.rar
+		FinalA			FinalA			Relationship Dialogue Overhaul - RDO FinalA-74568-FinalA.7z
+		-8				.8  			Windstad Mine - Loose Version-57879--8.zip
+		6-02			f6.02			Wildcat v602-76529-6-02.zip
+		1-01			f1.01			Blood of the Nord 1.01-72817-1-01.rar
+		4-05			f4.05			Thunderchild v405-41376-4-05.zip
+		4-06			f4.06			Wintermyst v406-58635-4-06.zip
+		2-02			f2.02			Timing is Everything-38151-2-02.7z
+		2-01			f2.01			WM Flora Fixes-70656-2-01.7z
+		1-04			f1.04			Modern Brawl Bug Fix v104-77465-1-04.zip
+		
+		known to fail:
+		usleep - version is really 3.0.8a, but file just tells 3-0-8, so
+		Multiple floors sandboxing has either or a b version (different option), but file just tells 1-0
+		
+		"""
+		
+		
+		pure_letters = re.search('^[a-zA-Z]+$', source)
+		if pure_letters:
+			if debug:
+				print('[MO_version_parser]:pure_letters, doing nothing')
+			return source
+		#CONST
+		magic_ad = '.0'
+		
+		#replaces - to .
+		target = source.replace('-','.')
+		#check if version starts with letter, then remove it
+		startswith_letter = re.match('^([a-zA-Z]+)', target)
+		if startswith_letter:
+			if debug:
+				print('[MO_version_parser]:startswith_letter')
+			target = target.replace(startswith_letter.group(1),'')
+		just_numbers = re.search('^[\d\.]+$', target) #only numbers and dots in whole string
+		if just_numbers:
+			if debug:
+				print('[MO_version_parser]:version is just numbers')
+			if target.startswith('.'): #windstat mine case
+				if debug:
+					print('[MO_version_parser]:version started with -')
+				pass # just return it as it is 
+			elif re.search('^\d+\.0\d+$', target): #zero after dot return "f" to front
+				if debug:
+					print('[MO_version_parser]:zero after dot, adding "f" to front')
+				return 'f' + target
+			else:
+				while not target.count('.') is 3: #MO expects version with at least 3 dots
+					target += magic_ad
+		else:
+			#fun begins
+			#check if version ends with letter
+			endswith_letter = re.match('[\d\.]+([a-zA-Z]+)$', target)
+			if endswith_letter:
+				if debug:
+					print('[MO_version_parser]:endswith_letter')
+				ml = endswith_letter.group(1) #matched letter
+				#ASIS patcher case, remove letter and the dot, then re add it? REVISE
+				if target.replace(ml,'').endswith('.'):
+					if debug:
+						print('[MO_version_parser]:endswith(\'.\')')
+					target = target.replace(ml,'')[:-1]
+					#make it MO friendly
+					while not target.count('.') is 3:
+							target += magic_ad
+					#readd the letter
+					target += '.' + ml
+				else:
+					#remove letter from version
+					target = target.replace (ml,'')
+					#make it MO friendly
+					while not target.count('.') is 3:
+							target += magic_ad
+					#readd the letter
+					target += ml
+		return target
+				
 	def writeMetaFiles(mod_file_name):
 		"""
 		Writes meta.ini you should get when doing querying info in MO
@@ -123,11 +240,16 @@ def verify_mods(mods, data):
 				meta_file.write('comment=' + data[mod_file_name]['comment'] + '\n')
 			meta_file.write('modID=' + data[mod_file_name]['modID'] + '\n')
 			meta_file.write('name=' + data[mod_file_name]['name'] + '\n')
-			if data[mod_file_name]['nexus_name'] != None and data[mod_file_name]['nexus_categoryN'] != None:
+			if data[mod_file_name].get('nexus_name') != None:
 				meta_file.write('modName=' + data[mod_file_name]['nexus_name'] + '\n')
-				meta_file.write('category=' + data[mod_file_name]['nexus_categoryN'] + '\n')
-			#TODO revive that special version parsing?
-			meta_file.write('version=' + data[mod_file_name]['version'] + '\n')
+			if data[mod_file_name].get('nexus_categoryN') != None:
+				MO_category_ID = convert_category_number(data[mod_file_name]['nexus_categoryN'])
+				if MO_category_ID is not None:
+					#category is written like this, for example:
+					#category="9,"
+					meta_file.write('category="' + MO_category_ID + ',"\n')
+			meta_file.write('version=' + MO_version_parser(data[mod_file_name]['version']) + '\n')
+		
 
 	def write_meta_ini(target_path):
 		"""
@@ -139,120 +261,6 @@ def verify_mods(mods, data):
 		
 		nexus_categoryN
 		"""
-		def convert_category_number(nexus_categoryN):
-			"""
-			input nexus_categoryN will get loaded in field 2
-			in categories.dat, which format is
-			$ID|$NAME|$NEXUS_ID|$PARENT_ID
-			
-			so far supporting hardcoded values
-			#TODO do a function to load custom categories.dat
-			"""
-			
-			categories_data = '1|Animations|51|0\n2|Armour|54|0\n3|Sound & Music|61|0\n\
-			5|Clothing|60|0\n6|Collectables|92|0\n28|Companions|66,96|0\n7|Creatures & Mounts|83,65|0\n\
-			8|Factions|25|0\n9|Gameplay|24|0\n10|Hair|26|0\n11|Items|27,85|0\n32|Mercantile|69|0\n\
-			19|Weapons|55|11\n36|Weapon & Armour Sets|39|11\n12|Locations|22,30,70,88,89,90,91|0\n\
-			31|Landscape Changes|58|0\n4|Cities|53|12\n29|Environment|74|0\n30|Immersion|78|0\n\
-			25|Castles & Mansions|68|23\n20|Magic|75,93,94|0\n21|Models & Textures|29|0\n\
-			33|Modders resources|82|0\n13|NPCs|33|0\n14|Patches|79,84|0\n24|Bugfixes|95|0\n\
-			35|Utilities|39|0\n26|Cheats|40|0\n23|Player Homes|67|0\n15|Quests|35|0\n\
-			16|Races & Classes|34|0\n27|Combat|77|0\n22|Skills|73|0\n34|Stealth|76|0\n17|UI|42|0\n18|Visuals|62|0'
-			
-			for line in categories_data.split('\n'):
-				#search for nexus_categoryN on index 2
-				if nexus_categoryN in line.split('|')[2]:
-					#we are looking for first index, the ID for MO
-					return line.split('|')[0]
-					
-		def MO_version_parser(source):
-			"""
-			converts all normal versions to MO like versions
-			
-			handles all mess versions like FinalA
-			
-			source			target			file
-			3-1-5a			3.1.5.0a		Alternate Start - Live Another Life-9557-3-1-5a.7z
-			1-42-5-H		1.42.5.0.H		ASIS Patcher 1-42-5 Hacked-18436-1-42-5-H.7z
-			9-0-1			9.0.1.0			A Quality World Map 9.0.1 - Vivid with Stone
-			v3-2			3.2.0.0			3DNPC v3.2-8429-v3-2.7z
-			5-0a			5.0.0.0a		Apophysis Dragon Priest Masks - Main File-15052-5-0a.rar
-			FinalA			FinalA			Relationship Dialogue Overhaul - RDO FinalA-74568-FinalA.7z
-			-8				.8  			Windstad Mine - Loose Version-57879--8.zip
-			6-02			f6.02			Wildcat v602-76529-6-02.zip
-			1-01			f1.01			Blood of the Nord 1.01-72817-1-01.rar
-			4-05			f4.05			Thunderchild v405-41376-4-05.zip
-			4-06			f4.06			Wintermyst v406-58635-4-06.zip
-			2-02			f2.02			Timing is Everything-38151-2-02.7z
-			2-01			f2.01			WM Flora Fixes-70656-2-01.7z
-			1-04			f1.04			Modern Brawl Bug Fix v104-77465-1-04.zip
-			
-			known to fail:
-			usleep - version is really 3.0.8a, but file just tells 3-0-8, so
-			Multiple floors sandboxing has either or a b version (different option), but file just tells 1-0
-			
-			"""
-			
-			
-			pure_letters = re.search('^[a-zA-Z]+$', source)
-			if pure_letters:
-				if debug:
-					print('[MO_version_parser]:pure_letters, doing nothing')
-				return source
-			#CONST
-			magic_ad = '.0'
-			
-			#replaces - to .
-			target = source.replace('-','.')
-			#check if version starts with letter, then remove it
-			startswith_letter = re.match('^([a-zA-Z]+)', target)
-			if startswith_letter:
-				if debug:
-					print('[MO_version_parser]:startswith_letter')
-				target = target.replace(startswith_letter.group(1),'')
-			just_numbers = re.search('^[\d\.]+$', target) #only numbers and dots in whole string
-			if just_numbers:
-				if debug:
-					print('[MO_version_parser]:version is just numbers')
-				if target.startswith('.'): #windstat mine case
-					if debug:
-						print('[MO_version_parser]:version started with -')
-					pass # just return it as it is 
-				elif re.search('^\d+\.0\d+$', target): #zero after dot return "f" to front
-					if debug:
-						print('[MO_version_parser]:zero after dot, adding "f" to front')
-					return 'f' + target
-				else:
-					while not target.count('.') is 3: #MO expects version with at least 3 dots
-						target += magic_ad
-			else:
-				#fun begins
-				#check if version ends with letter
-				endswith_letter = re.match('[\d\.]+([a-zA-Z]+)$', target)
-				if endswith_letter:
-					if debug:
-						print('[MO_version_parser]:endswith_letter')
-					ml = endswith_letter.group(1) #matched letter
-					#ASIS patcher case, remove letter and the dot, then re add it? REVISE
-					if target.replace(ml,'').endswith('.'):
-						if debug:
-							print('[MO_version_parser]:endswith(\'.\')')
-						target = target.replace(ml,'')[:-1]
-						#make it MO friendly
-						while not target.count('.') is 3:
-								target += magic_ad
-						#readd the letter
-						target += '.' + ml
-					else:
-						#remove letter from version
-						target = target.replace (ml,'')
-						#make it MO friendly
-						while not target.count('.') is 3:
-								target += magic_ad
-						#readd the letter
-						target += ml
-			return target
-		
 		if debug:
 			print('Writing meta.ini file to', target_path)
 		with open(target_path, 'w') as meta_ini_file:
@@ -263,7 +271,7 @@ def verify_mods(mods, data):
 			meta_ini_file.write('modid=' + data[mod_file_name]['modID'] + '\n')
 			meta_ini_file.write('version=' + MO_version_parser(data[mod_file_name]['version']) + '\n')
 			#newestVersion ignored
-			if data[mod_file_name]['nexus_categoryN'] != None:
+			if data[mod_file_name].get('nexus_categoryN') != None:
 				MO_category_ID = convert_category_number(data[mod_file_name]['nexus_categoryN'])
 				if MO_category_ID is not None:
 					#category is written like this, for example:
@@ -471,6 +479,7 @@ def verify_mods(mods, data):
 				print('[OK]',mod_file_name)
 				#if the source file exists
 				if os.path.exists(mod) is True:
+					destination = os.path.join(os.getcwd(),MO_downloads + '/' + mod_file_name)
 					if debug:
 						print('Moving {0} to {1}'.format(mod, destination))
 					#check mod has installer, then copy it to dl folder
