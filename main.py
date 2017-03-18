@@ -13,6 +13,7 @@ import sys # for exits
 #------------------------------------config-------------------------------------
 json_file = 'fo4_utils.json'
 utilities_download_dir = 'utilitiesfo4'
+custom_MO_categories = 'MO2_FO4_categories.dat'
 print_guidance_switch = True
 #-------------------------------------defs--------------------------------------
 
@@ -74,15 +75,28 @@ if __name__ == "__main__":
 	.format(game_dir, input_json['game']))
 	#----------------------------- 1. Do Install -------------------------------
 	m1utils_install.install_utilities(input_json['game'], utilities_data)
-
+	
+	#---------------------- 2. Handle Mod Organizer Ini ------------------------
+	mo_config = input_json['ModOrganizer.ini']
+	#destination
 	if input_json['game'] == 'Fallout 4':
 		mo_destination = os.environ['LOCALAPPDATA'] + r'\\ModOrganizer\\Fallout 4'
 	else:
-		mo_destination = utilities_data['Mod Organizer']['install_path'] #TODO pass this to verify_modpack
+		mo_destination = utilities_data['Mod Organizer']['install_path']
+	#make sure destination exist
 	if not os.path.exists(mo_destination):
 		os.makedirs(mo_destination)
-	mo_config = input_json['ModOrganizer.ini']
+	#do write
 	m1utils_install.write_MO_ini(mo_destination, mo_config, game_dir)
+	#if any custom categories write them
+	if custom_MO_categories:
+		if input_json['game'] == 'Fallout 4':
+			m1utils_install.write_MO_categories(custom_MO_categories, os.environ['LOCALAPPDATA'] + r'\\ModOrganizer\\Fallout 4\\categories.dat')
+		#TODO if input_json['game'] == 'Skyrim':
+		
+	#TODO pass to verify_modpack
+	#mo_destination
+	#categories_content=m1utils_install.load_MO_categories_content(custom_MO_categories)
 
 	#TODO install sumarry, what was installed sucessfuly and what not
 	if print_guidance_switch:

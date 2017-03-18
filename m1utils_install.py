@@ -23,6 +23,14 @@ import pyunpack #for unpacking, needs patool
 import shutil #for move and copy of "dirty" archives
 import tempfile #for unpacking "dirty" archives
 
+def load_MO_categories_content(categories_dat_file):
+	with open('MO2_FO4_categories.dat') as f:
+		data = f.read()
+	return data
+
+def write_MO_categories(categories_dat_file, target):
+	print('Writing categories.dat to', target)
+	shutil.copy(categories_dat_file, target)
 
 def write_MO_ini(MO_destination, MO_config, game_dir):
 	"""

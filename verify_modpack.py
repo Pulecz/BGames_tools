@@ -32,6 +32,10 @@ Mod Organizer needs to be fed correct meta files as it cannot query info for man
 
 Writing plugins.txt, loadorder.txt and others txt will not be supported as its recommended to load files from ModPicker or to use LOOT
 
+expected_input:
+	MO_bin
+	categories_data
+
 TODOs:
   - Print links for missing files, so users can easilly download them
   - With that make soma kind of summary, how many files verified, etc
@@ -42,7 +46,7 @@ TODOs:
 """
 #-------------------------------------Input-------------------------------------
 #not used for now
-#Game = 'Fallout 4'
+Game = 'Fallout 4'
 #Game = 'Skyrim'
 debug = False
 target = os.getcwd()
@@ -55,6 +59,7 @@ MO_mods = MO_bin + r"\mods"
 
 
 def scan_dir(target):
+	#todo also add whitelist just for archives
 	"""
 	scans directory recursively
 	returns file_list, which are paths to the files
@@ -122,17 +127,11 @@ def verify_mods(mods, data):
 			#TODO do a function to load custom categories.dat
 			#TODO currently adds huge tabs to begining to categories like 35
 			"""
-			
-			categories_data = '1|Animations|51|0\n2|Armour|54|0\n3|Sound & Music|61|0\n\
-			5|Clothing|60|0\n6|Collectables|92|0\n28|Companions|66,96|0\n7|Creatures & Mounts|83,65|0\n\
-			8|Factions|25|0\n9|Gameplay|24|0\n10|Hair|26|0\n11|Items|27,85|0\n32|Mercantile|69|0\n\
-			19|Weapons|55|11\n36|Weapon & Armour Sets|39|11\n12|Locations|22,30,70,88,89,90,91|0\n\
-			31|Landscape Changes|58|0\n4|Cities|53|12\n29|Environment|74|0\n30|Immersion|78|0\n\
-			25|Castles & Mansions|68|23\n20|Magic|75,93,94|0\n21|Models & Textures|29|0\n\
-			33|Modders resources|82|0\n13|NPCs|33|0\n14|Patches|79,84|0\n24|Bugfixes|95|0\n\
-			35|Utilities|38,39|0\n26|Cheats|40|0\n23|Player Homes|67|0\n15|Quests|35|0\n\
-			16|Races & Classes|34|0\n27|Combat|77|0\n22|Skills|73|0\n34|Stealth|76|0\n17|UI|42|0\n18|Visuals|62|0'
-			
+			if Game == 'Fallout 4':
+				categories_data = "1|Ammo|3|0\n2|Animation|4|0\n3|Armour|5|0\n4|Audio - Misc|35|0\n5|Audio - Music|34|0\n6|Audio - SFX|33|0\n7|Audio - Voice|36|0\n8|Body, Face, and Hair|17|0\n9|Bug Fixes|6|0\n10|Buildings|7|0\n11|Character Presets|58|0\n12|Cheats and God items|8|0\n13|Clothing|9|0\n14|Clothing - Backpacks|49|0\n15|Collectibles, Treasure Hunts, and Puzzles|10|0\n16|Companions|11|0\n17|Crafting - Equipment|44|0\n18|Crafting - Home/Settlement|45|0\n19|Crafting - Other|50|0\n20|Creatures|12|0\n21|ENB Presets|13|0\n22|Environment|14|0\n23|Factions|16|0\n24|Gameplay Effects and Changes|15|0\n25|Immersion|51|0\n26|Items (Food, Drinks, Chems, etc)|43|0\n27|Locations - New|21|0\n28|Locations - Vanilla|47|0\n29|Miscellaneous|2|0\n30|Modders Resources and Tutorials|18|0\n31|Models and Textures|19|0\n32|New Lands|20|0\n33|NPC|22|0\n34|NPC - Vendors|23|0\n35|Overhauls|24|0\n36|Patches|25|0\n37|Performance|26|0\n38|Perks|27|0\n39|Pip-Boy|52|0\n40|Player Homes|28|0\n41|Player Settlement|48|0\n42|Poses|29|0\n43|Power Armour|53|0\n44|Quests and Adventures|30|0\n45|Radio|31|0\n46|ReShade Presets|55|0\n47|Save Games|32|0\n48|Skills and Leveling|46|0\n49|Tattoos|57|0\n50|User Interface|37|0\n51|Utilities|38|0\n52|Vehicles|39|0\n53|Visuals and Graphics|40|0\n54|Weapons|41|0\n55|Weapons and Armour|42|0\n56|Weather|56|0"
+			elif Game == 'Skyrim':
+				categories_data = "1|Animations|51|0\n2|Armour|54|0\n3|Sound & Music|61|0\n5|Clothing|60|0\n6|Collectables|92|0\n28|Companions|66,96|0\n7|Creatures & Mounts|83,65|0\n8|Factions|25|0\n9|Gameplay|24|0\n10|Hair|26|0\n11|Items|27,85|0\n32|Mercantile|69|0\n19|Weapons|55|11\n36|Weapon & Armour Sets|39|11\n12|Locations|22,30,70,88,89,90,91|0\n31|Landscape Changes|58|0\n4|Cities|53|12\n29|Environment|74|0\n30|Immersion|78|0\n25|Castles & Mansions|68|23\n20|Magic|75,93,94|0\n21|Models & Textures|29|0\n33|Modders resources|82|0\n13|NPCs|33|0\n14|Patches|79,84|0\n24|Bugfixes|95|0\n35|Utilities|38,39|0\n26|Cheats|40|0\n23|Player Homes|67|0\n15|Quests|35|0\n16|Races & Classes|34|0\n27|Combat|77|0\n22|Skills|73|0\n34|Stealth|76|0\n17|UI|42|0\n18|Visuals|62|0"
+				
 			for line in categories_data.split('\n'):
 				#search for nexus_categoryN on index 2
 				if nexus_categoryN in line.split('|')[2]:

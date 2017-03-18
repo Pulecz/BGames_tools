@@ -62,7 +62,10 @@ def validate_input():
 	"""
 	def nexus_title_replace():
 		"""return string used for replacing mod page titles"""
-		game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
+		if Game == 'Fallout 4':
+			game_link_replacer = ' at ' + Game + ' Nexus - Mods and community'
+		elif Game == 'Skyrim':
+			game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
 		return game_link_replacer
 	
 	#for FO4 no skyrimgems possible, set it global so the variable change is done
