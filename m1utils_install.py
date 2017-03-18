@@ -23,8 +23,11 @@ import pyunpack #for unpacking, needs patool
 import shutil #for move and copy of "dirty" archives
 import tempfile #for unpacking "dirty" archives
 
+def write_default_profile():
+	pass #TODO
+
 def load_MO_categories_content(categories_dat_file):
-	with open('MO2_FO4_categories.dat') as f:
+	with open(categories_dat_file) as f:
 		data = f.read()
 	return data
 

@@ -1,8 +1,9 @@
-#main V0.4
+#main V0.5
 #V0.1 - basic calling defs from modules
 #V0.2 - some imports and functions here, load json and etc
 #V0.3 - lot of polishing
 #V0.4 - less functions, less modules, no subprocess
+#V0.5 - custom_MO_categories and verify_modpack support
 
 #------------------------------- import modules --------------------------------
 from json import load, JSONDecodeError #for def load_json:
@@ -13,8 +14,13 @@ import sys # for exits
 #------------------------------------config-------------------------------------
 json_file = 'fo4_utils.json'
 utilities_download_dir = 'utilitiesfo4'
+
+modpack_json = 'modpack.json'
+mods_repo = r"s:\new\_need\TES5_Skyrim\MODS.REPO"
+
 custom_MO_categories = 'MO2_FO4_categories.dat'
 print_guidance_switch = True
+debug=False
 #-------------------------------------defs--------------------------------------
 
 
@@ -95,8 +101,8 @@ if __name__ == "__main__":
 		#TODO if input_json['game'] == 'Skyrim':
 		
 	#TODO pass to verify_modpack
-	#mo_destination
 	#categories_content=m1utils_install.load_MO_categories_content(custom_MO_categories)
+	verify_modpack.main(input_json['game'], modpack_json, mods_repo, mo_destination, debug=debug))
 
 	#TODO install sumarry, what was installed sucessfuly and what not
 	if print_guidance_switch:
@@ -113,7 +119,7 @@ d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\overwrite
 d:\Games\Steam\steamapps\common\Skyrim\Mods\\ModOrganizer\\mods')
 
 todo
-	support for mod analyzer
+	print('Done, writing, now writing default MO profile')
 
 
 what next

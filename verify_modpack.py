@@ -45,16 +45,18 @@ TODOs:
   - write new folder with modpack name to d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer\profiles\
 """
 #-------------------------------------Input-------------------------------------
-#not used for now
+#TODO should be pased from main
 Game = 'Fallout 4'
 #Game = 'Skyrim'
-debug = False
-target = os.getcwd()
+if Game is 'Fallout 4':
+	MO_bin = r"d:\SteamLibrary\steamapps\common\Fallout 4\Mods\ModOrganizer"
+if Game is 'Skyrim':
+	MO_bin = r"d:\SteamLibrary\steamapps\common\Skyrim\Mods\ModOrganizer"
 modpack_json = 'modpack.json'
-#todo read utilities to get the MO path and just append downloads and mods
-MO_bin = r"d:\SteamLibrary\steamapps\common\Fallout 4\Mods\ModOrganizer"
-MO_downloads = MO_bin + r"\downloads"
-MO_mods = MO_bin + r"\mods"
+mods_repo = os.getcwd()
+#TODO get from utilities.json
+debug = False
+
 #----------------------------------- defs ------------------------------------
 
 
@@ -519,12 +521,16 @@ def verify_mods(mods, data):
 			#TODO print missing link to download it
 
 
-if __name__ == "__main__":
-	#-----------------------------scan current dir------------------------------
-	mods_list = scan_dir(target)
+def main(Game, modpack_json, mods_repo, MO_bin, debug=debug):
+	MO_downloads = MO_bin + r"\downloads"
+	MO_mods = MO_bin + r"\mods"
+	#------------------------------get file list------------------------------
+	mods_list = scan_dir(mods_repo)
 	#------------------------------- load json ---------------------------------
 	mods_data = try_load_json(modpack_json)
 	#------------------------------- verify json ---------------------------------
 	print('Trying to verify and move mods defined in',modpack_json,'to',MO_downloads)
 	verify_mods(mods_list, mods_data)
-	#TODO print('Done, writing, now writing default MO profile')
+			
+if __name__ == "__main__":
+	main(Game, modpack_json, mods_repo, MO_bin, debug=debug)
