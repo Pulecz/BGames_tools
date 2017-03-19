@@ -66,18 +66,18 @@ if __name__ == "__main__":
 	#input_json = m2modpack_tools.try_load_json(json_file)
 	if Game == 'Fallout 4':
 		try:
-			game_dir = m0prerequisites.game_dir_from_registry(r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim")
+			game_dir = m0prerequisites.game_dir_from_registry(r"SOFTWARE\WOW6432Node\Bethesda Softworks\Fallout4")
 		except ValueError:
-			print('No registry entry for Skyrim. Run Skyrim at least once')
+			print('No registry entry for Fallout 4. Run Fallout 4 at least once')
 			print('ERROR: Exit 99')
 			sys.exit(99)
 		input_json = CONST.fallout4_utils
 		mo_destination = os.environ['LOCALAPPDATA'] + r'\\ModOrganizer\\Fallout 4'
 	elif Game == 'Skyrim':
 		try:
-			game_dir = m0prerequisites.game_dir_from_registry(r"SOFTWARE\WOW6432Node\Bethesda Softworks\Fallout4")
+			game_dir = m0prerequisites.game_dir_from_registry(r"SOFTWARE\WOW6432Node\Bethesda Softworks\skyrim")
 		except ValueError:
-			print('No registry entry for Fallout 4. Run Fallout 4 at least once')
+			print('No registry entry for Skyrim. Run Skyrim at least once')
 			print('ERROR: Exit 99')
 			sys.exit(99)
 		input_json = CONST.skyrim_utils
@@ -109,10 +109,10 @@ if __name__ == "__main__":
 			m1utils_install.write_MO_categories(custom_MO_categories, os.environ['LOCALAPPDATA'] + r'\\ModOrganizer\\Fallout 4\\categories.dat')
 		#TODO if Game == 'Skyrim':
 
-	#TODO pass to verify_modpack
-	#categories_content=m1utils_install.load_MO_categories_content(custom_MO_categories)
-	verify_modpack.main(Game, modpack_json, mods_repo, mo_destination, debug=debug))
-
 	#TODO install sumarry, what was installed sucessfuly and what not
 	if print_guidance_switch:
 		print_guidance()
+
+	#TODO pass to verify_modpack
+	#categories_content=m1utils_install.load_MO_categories_content(custom_MO_categories)
+	#verify_modpack.main(Game, modpack_json, mods_repo, mo_destination, debug=debug)
