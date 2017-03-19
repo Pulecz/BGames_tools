@@ -1,6 +1,6 @@
+import CONST #for 99ids
+import m2modpack_tools #for scanning and json work
 import re, os #parsing, scaning
-import json #for input output
-import hashlib #for make_checksum
 from urllib.request import urlopen # for web_parsing
 
 """
@@ -44,7 +44,7 @@ if switch_get_nexus_info:
 	#skyrimgems search uses nexus_name from Nexus
 	#hence its not possible to do search without getting nexus info
 	switch_get_skyrimgems_desc = True
-	
+
 #patool is needed for getting installer type
 if switch_determine_mod_install_type:
 	try:
@@ -67,16 +67,14 @@ def validate_input():
 		elif Game == 'Skyrim':
 			game_link_replacer = ' at ' + Game + ' Nexus - mods and community'
 		return game_link_replacer
-	
+
 	#for FO4 no skyrimgems possible, set it global so the variable change is done
 	global switch_get_skyrimgems_desc
 	if Game == 'Fallout 4':
 		game_link = 'fallout4'
-		bellow_id_100_json = 'fo4_99ids.json'
 		switch_get_skyrimgems_desc = False
 	elif Game == 'Skyrim':
 		game_link = 'skyrim'
-		bellow_id_100_json = 'skyrim_99ids.json'
 	else:
 		print('Game {0} is not recognized as a valid option.\nHit any key to exit.'.format(Game))
 		input()
@@ -85,41 +83,9 @@ def validate_input():
 	return (bellow_id_100_json, game_link, game_link_replacer)
 
 
-def scan_dir(target):
-	"""
-	scans directory recursively
-	returns file_list, which are paths to the files
-	"""
-	file_list = []
-	blacklist = ['build_modpack.py','.meta', 'mod.info']
-	for root, dirs, files in os.walk(target):
-		for file in files:
-			if any(blacklist_item in file for blacklist_item in blacklist):
-				continue
-			file_list.append(os.path.join(root, file))
-	return file_list
 
-		
-def make_checksum(mod_file, chunk_size=1024):
-	"""
-	Make checksum in sha1 for big files
-	from http://stackoverflow.com/questions/1131220/get-md5-hash-of-big-files-in-python
-	and http://stackoverflow.com/questions/519633/lazy-method-for-reading-big-file-in-python?noredirect=1&lq=1
-	"""
-	if debug:
-		print('Calculating checksum for', mod_file)
-	file_object = open(mod_file, 'rb')
-	sha1 = hashlib.sha1();
-	"""Lazy function (generator) to read a file piece by piece.
-	Default chunk size: 1k."""
-	while True:
-		data = file_object.read(chunk_size)
-		if not data:
-			break
-		sha1.update(data)
-	return sha1.hexdigest()
 
-	
+
 def parse_nexus_mods(mods):
 	"""
 	returns dict with key of the filename of the mod
@@ -172,8 +138,8 @@ def parse_nexus_mods(mods):
 			print(url_e)
 			return None
 		skyrimgems_source = foo.read().decode('cp852')# this just works
-		return skyrimgems_source		
-	
+		return skyrimgems_source
+
 	def search_skyrimgems_source(nexus_name): #TODO needs some filtering
 		"""
 		tries to match mod description with this crazy regex and then tries to do some filtering
@@ -195,21 +161,23 @@ def parse_nexus_mods(mods):
 		fetch.replace('[<span class="DG">DG</span>]','[DG]')
 		fetch.replace('[<span class=\"SKSE\">SKSE</span>]','[SKSE]')
 		return fetch
-	
-	def load_bellow_id_100_data(json_file):
+
+	def load_bellow_id_100_data(Game):
 		"""
-		load jsons file, should be called only once
+		returns dict of nexus ids bellow 100
+
+        should be called only once
 		"""
-		with open(json_file, 'r') as f:
-			data = f.read()
-			json_data = json.loads(data)
-		return json_data
-				
+        if Game == 'Fallout 4':
+    		return CONST.fallout4_99_ids
+    	elif Game == 'Skyrim':
+    		return CONST.skyrim_99_ids
+
 	def search_in_bellow_id_100_data(target, data):
 		"""
 		goes through data, which are specific structure
-		for nexus ids bellow 100
-		
+		for nexus ids bellow 100 based in list of file_names(data[i][0])
+
 		returns id of the mod(the key of data)
 		"""
 		for i in data.keys():
@@ -218,7 +186,7 @@ def parse_nexus_mods(mods):
 					#print the whole value of the key except the first mod_filename_list
 					##print(data[i][1:])
 					return i
-					
+
 	d = {}
 	failed = []
 	re_nexus_id = r'\-(\d{3,})\-?' #- at least theree digits and optionaly -
@@ -239,7 +207,7 @@ def parse_nexus_mods(mods):
 			print('\nWARNING: Item "{0}" has probably ID bellow 100, trying to check for ids...\n'.format(mod_file_name))
 			#try looking if the file_name has nexus_id bellow 100
 			if not bellow_id_100_data:
-				bellow_id_100_data = load_bellow_id_100_data(bellow_id_100_json)
+				bellow_id_100_data = load_bellow_id_100_data(Game)
 			nexus_id = search_in_bellow_id_100_data(mod_file_name, bellow_id_100_data)
 			#if failed then skip, the file is surely not for nexus
 			if not nexus_id:
@@ -270,7 +238,7 @@ def parse_nexus_mods(mods):
 		d[mod_file_name] = {}
 		d[mod_file_name]['name'] = name
 		d[mod_file_name]['file_name'] = name + '-' + nexus_id + '-' + version + extension
-		d[mod_file_name]['sha1'] = make_checksum(mod)
+		d[mod_file_name]['sha1'] = m2modpack_tools.make_checksum(mod)
 		d[mod_file_name]['modID'] = nexus_id
 		d[mod_file_name]['nexus_link'] = 'http://www.nexusmods.com/' + game_link + '/mods/' + nexus_id + '/'
 		d[mod_file_name]['version'] = version
@@ -318,27 +286,14 @@ def parse_nexus_mods(mods):
 	return d
 
 
-def try_save_json(json_file, data):
-	"""
-	Try to save JSON on Windows
-	"""
-	try:
-		with open(json_file, 'w') as input_file:
-			input_file.write(json.dumps(data))
-		return True
-	except OSError as e:
-		print('FAIL: Windows happened:\n  {0}'.format(e))
-		return False
-
-		
 #-----------------------------------------------------------------------------
 if __name__ == "__main__":
 	bellow_id_100_json, game_link, game_link_replacer = validate_input() #exit if not OK
 	#-----------------------------scan current dir------------------------------
-	mods_list = scan_dir(target)
+	mods_list = m2modpack_tools.scan_dir(target)
 	#-------------------------------- get info ---------------------------------
 	print('Building modpack from all mod files in', target)
 	mods_data = parse_nexus_mods(mods_list)
 	#------------------------------- save json ---------------------------------
 	if len(mods_data) != 0: #some mod found
-		try_save_json(modpack_json, mods_data)
+		m2modpack_tools.try_save_json(modpack_json, mods_data)
